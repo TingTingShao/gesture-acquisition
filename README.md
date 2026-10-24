@@ -3,10 +3,30 @@
 A single-file web app that runs the 10-minute gesture protocol and writes a timestamped
 label log, so the sensor recording can be cut by label without any manual annotation.
 
-## Run it
+## Open it
 
-Open `index.html` in Chrome or Safari. No server, no install, no network: it works offline
-from a USB stick or from the desktop.
+**Live link — nothing to install:**
+<https://gesture-acquisition.apps.workbuddy.host/?sharecode=FJIBYQPJ6Q>
+
+Open it in a laptop browser (Chrome or Safari). Phone layouts work, but the protocol needs a
+table, a glass, a keyboard and scissors, so a laptop is the only sensible place to run it.
+
+Two things to know before sharing the link:
+
+- **Records stay with whoever runs the session.** The archive lives in that browser's
+  `localStorage`; nothing is uploaded and the link does not collect data centrally. If you need
+  someone's session, ask them for the CSV.
+- **The link is public.** Anyone holding it can run a session. There is no login.
+
+For a study, the local file is still the better setup: one machine, one archive, one export.
+
+## Run it locally
+
+Open `index.html` in Chrome or Safari — double-click it, or drag it into a browser window. No
+server, no install, no network: it works offline from a USB stick or from the desktop.
+
+Do not open it inside an IDE preview panel or any other sandboxed frame: those drop every file
+download silently. The page detects that case and says so, but the files never appear.
 
 For the day itself:
 
