@@ -1,0 +1,8 @@
+# Session output — subject data must never be committed
+gesture_*.csv
+gesture_*.json
+gesture_*.eml
+gesture_all_*.csv
+
+# OS noise
+.DS_Store

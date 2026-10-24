@@ -1,0 +1,1348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Gesture Acquisition · Science Day</title>
+<style>
+:root{
+  --bg:#FAF9F6; --panel:#FFFFFF; --ink:#1B1B19; --ink2:#5F5E58; --ink3:#8A8880;
+  --line:rgba(27,27,25,.10); --line2:rgba(27,27,25,.20);
+  --teal:#0F6E56; --teal-bg:#E8F5F0; --teal-ink:#0B4F3E;
+  --amber:#9A6410; --amber-bg:#FBF1DE;
+  --gray-bg:#F1EFE8;
+  --r:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:ui-sans-serif,-apple-system,"SF Pro Text","Helvetica Neue","Segoe UI",Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  transition:background-color .35s ease;
+}
+body[data-phase="perform"]{background:#F4FAF7}
+body[data-phase="ready"]{background:#FDF7EC}
+body.locked{overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+.screen{display:none}
+.screen.on{display:block}
+
+.eyebrow{font-size:12px;letter-spacing:.10em;text-transform:uppercase;color:var(--ink3);font-weight:500}
+h1{font-size:26px;font-weight:500;margin:8px 0 6px;letter-spacing:-.01em}
+.lede{margin:0;font-size:14px;line-height:1.6;color:var(--ink2);max-width:60ch}
+
+#setup.on{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:20px}
+.card{width:100%;max-width:760px;background:var(--panel);border:1px solid var(--line);
+  border-radius:20px;padding:clamp(22px,3.4vw,40px);box-shadow:0 1px 2px rgba(27,27,25,.04)}
+.card.wide{max-width:1000px}
+
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px 18px;margin:22px 0 2px}
+@media(max-width:720px){.grid{grid-template-columns:1fr}}
+.field{display:flex;flex-direction:column;gap:7px}
+.field > span{font-size:12px;font-weight:500;color:var(--ink2)}
+input[type=text],input[type=email],input[type=number]{
+  height:44px;padding:0 13px;border:1px solid var(--line2);border-radius:10px;
+  background:#FCFCFA;font-size:15px;color:var(--ink);outline:none;width:100%
+}
+input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,110,86,.12)}
+
+.seg{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden;height:44px}
+.seg button{flex:1;background:#FCFCFA;border:0;font-size:14px;color:var(--ink2)}
+.seg button + button{border-left:1px solid var(--line2)}
+.seg button[aria-pressed="true"]{background:var(--teal-bg);color:var(--teal-ink);font-weight:500}
+
+.toggle{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:13px;color:var(--ink2)}
+.toggle input{width:16px;height:16px;accent-color:var(--teal)}
+
+.proto{margin-top:18px;border:1px solid var(--line);border-radius:12px;padding:15px 16px;background:#FCFCFA}
+.proto-row{display:flex;align-items:center;gap:10px}
+.proto-row label{font-size:12px;font-weight:500;color:var(--ink2)}
+.proto-row input{width:78px;height:38px;padding:0 10px;border:1px solid var(--line2);
+  border-radius:9px;background:#fff;font-size:14px;color:var(--ink);outline:none;font-variant-numeric:tabular-nums}
+.proto-row input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,110,86,.12)}
+.proto-row .unit{font-size:12px;color:var(--ink3)}
+.budget{margin:11px 0 0;font-size:12px;line-height:1.7;color:var(--ink3)}
+.budget b{font-weight:500;color:var(--ink2);font-variant-numeric:tabular-nums}
+.budget.bad{color:#A32D2D}
+
+details.props{margin-top:20px;border:1px solid var(--line);border-radius:12px;padding:0 16px;background:#FCFCFA}
+details.props summary{cursor:pointer;padding:13px 0;font-size:13px;font-weight:500;color:var(--ink2)}
+details.props ul{margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.85;color:var(--ink2)}
+
+.start{width:100%;margin-top:18px;height:56px;border:0;border-radius:12px;background:var(--teal);
+  color:#fff;font-size:16px;font-weight:500;letter-spacing:.01em}
+.start:hover{background:#0C5C48}
+.start:disabled{background:#C9C7BF;cursor:not-allowed}
+.hint{margin:14px 0 0;font-size:12px;color:var(--ink3);line-height:1.7}
+.kbd{display:inline-block;padding:1px 6px;border:1px solid var(--line2);border-radius:5px;
+  font-size:11px;background:#F4F3EE;color:var(--ink2);margin:0 2px}
+
+#run.on{display:flex;flex-direction:column;height:100dvh;height:100vh;user-select:none}
+@supports(height:100dvh){#run.on{height:100dvh}}
+
+.hud{display:flex;align-items:center;gap:20px;padding:16px clamp(18px,3.4vw,44px);
+  font-size:12px;color:var(--ink3);letter-spacing:.02em}
+.hud .l{min-width:110px;font-weight:500;color:var(--ink2)}
+.hud .track{flex:1;height:3px;background:rgba(27,27,25,.10);border-radius:2px;overflow:hidden}
+.hud .fill{height:100%;width:0;background:var(--ink3);border-radius:2px;transition:width .2s linear}
+.hud .r{min-width:110px;text-align:right;font-variant-numeric:tabular-nums}
+
+.stage{flex:1;min-height:0;display:flex;flex-direction:column;
+  padding:clamp(16px,3vh,44px) clamp(20px,5vw,80px);position:relative}
+.stage-body{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,660px) auto;
+  justify-content:center;gap:clamp(24px,4.5vw,72px);align-items:center}
+.txt{min-width:0}
+.stage[data-phase="perform"]{--ph:#0F6E56}
+.stage[data-phase="lead"],.stage[data-phase="rest"]{--ph:#6F6D66}
+.stage[data-phase="ready"]{--ph:#9A6410}
+
+.phase{font-size:13px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:var(--ph);
+  display:flex;align-items:center;gap:9px}
+.phase::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ph)}
+
+.gname{font-size:clamp(34px,6.2vw,76px);line-height:1.04;font-weight:500;letter-spacing:-.025em;
+  margin:clamp(10px,1.6vh,20px) 0 0;max-width:18ch;color:var(--ink)}
+.stage[data-phase="rest"] .gname,.stage[data-phase="lead"] .gname{color:var(--ink2);font-size:clamp(28px,4.4vw,52px)}
+.stage[data-phase="ready"] .gname{font-size:clamp(32px,5.4vw,64px)}
+
+.ginstr{font-size:clamp(16px,1.7vw,22px);line-height:1.6;color:var(--ink2);
+  margin:clamp(10px,1.8vh,22px) 0 0;max-width:52ch}
+.stage[data-phase="rest"] .ginstr,.stage[data-phase="lead"] .ginstr{font-size:clamp(14px,1.3vw,17px)}
+
+.chip{display:inline-flex;align-items:center;gap:8px;margin-top:clamp(12px,2vh,24px);
+  padding:8px 14px;border-radius:999px;background:var(--teal-bg);color:var(--teal-ink);
+  font-size:13px;font-weight:500;width:fit-content}
+.chip:empty{display:none}
+.chip::before{content:"";width:5px;height:5px;border-radius:50%;background:var(--teal)}
+
+.meter{padding-top:clamp(14px,2.6vh,30px);display:flex;align-items:flex-end;gap:24px}
+.count{font-size:clamp(60px,8.6vw,110px);line-height:.82;font-weight:500;color:var(--ph);
+  font-variant-numeric:tabular-nums;letter-spacing:-.045em;min-width:2.15ch;text-align:right}
+.meter .unit{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink3);padding-bottom:14px}
+.win{flex:1;height:6px;background:rgba(27,27,25,.09);border-radius:3px;overflow:hidden;margin-bottom:20px}
+.win > div{height:100%;width:0;background:var(--ph);border-radius:3px;transition:width .18s linear}
+
+.art{position:relative;flex:none;width:clamp(210px,25vw,360px);border-radius:26px;
+  background:#FBF7F1;border:1px solid rgba(27,27,25,.07);padding:7px;
+  transition:background-color .35s ease}
+.stage[data-phase="perform"] .art{background:#F3F9F5;border-color:rgba(15,110,86,.10)}
+.stage[data-phase="ready"] .art{background:#FCF4E6;border-color:rgba(154,100,16,.14)}
+.art .defs{position:absolute;width:0;height:0;overflow:hidden}
+.art svg{display:block;width:100%;height:auto}
+.art .scene{display:none}
+.art .scene.active{display:block}
+.table{fill:#E7E1D5}
+
+@keyframes drinkMove{0%,10%{transform:translate(0,0) rotate(0deg)}
+  30%,54%{transform:translate(125px,-57px) rotate(60deg)}72%,100%{transform:translate(0,0) rotate(0deg)}}
+.mvDrink{transform-box:view-box;transform-origin:64px 170px;animation:drinkMove 6.4s ease-in-out infinite}
+
+@keyframes eatMove{0%,12%{transform:translate(0,0)}30%,48%{transform:translate(109px,-88px)}66%,100%{transform:translate(0,0)}}
+.mvEat{animation:eatMove 6.4s ease-in-out infinite}
+@keyframes almondMove{0%{transform:translate(0,0);opacity:0}6%{transform:translate(0,0);opacity:1}
+  30%,46%{transform:translate(109px,-88px);opacity:1}
+  52%,100%{transform:translate(109px,-88px) scale(.3);opacity:0}}
+.almond{transform-box:view-box;transform-origin:108px 190px;animation:almondMove 6.4s ease-in-out infinite}
+
+@keyframes capMove{0%{transform:rotate(0deg);opacity:0}5%{transform:rotate(0deg);opacity:1}
+  13%{transform:rotate(-26deg)}19%{transform:rotate(24deg)}25%{transform:rotate(-20deg)}31%{transform:rotate(0deg)}
+  44%{transform:translate(2px,-22px) rotate(8deg)}
+  70%,94%{transform:translate(64px,86px) rotate(40deg);opacity:1}
+  100%{transform:translate(64px,86px) rotate(40deg);opacity:0}}
+.capMv{transform-box:view-box;transform-origin:113px 101px;animation:capMove 6.4s ease-in-out infinite}
+@keyframes handOpen{0%,31%{transform:translate(0,0)}44%{transform:translate(2px,-22px)}
+  70%{transform:translate(64px,86px)}88%,100%{transform:translate(0,0)}}
+.handOpenMv{animation:handOpen 6.4s ease-in-out infinite}
+
+@keyframes pourTilt{0%,12%{transform:translate(0,0) rotate(0deg)}
+  28%,66%{transform:translate(4px,-10px) rotate(54deg)}82%,100%{transform:translate(0,0) rotate(0deg)}}
+.pourMv{transform-box:view-box;transform-origin:78px 152px;animation:pourTilt 6.6s ease-in-out infinite}
+@keyframes streamOn{0%,26%{opacity:0}32%,62%{opacity:1}70%,100%{opacity:0}}
+@keyframes flow{to{stroke-dashoffset:-28}}
+.stream{stroke-dasharray:7 7;animation:streamOn 6.6s ease-in-out infinite,flow .8s linear infinite}
+@keyframes waterUp{0%,26%{transform:scaleY(.18)}62%,86%{transform:scaleY(.85)}100%{transform:scaleY(.18)}}
+.waterRise{transform-box:fill-box;transform-origin:50% 100%;animation:waterUp 6.6s ease-in-out infinite}
+
+@keyframes tapMove{0%,4%{transform:translateY(0)}8%,11%{transform:translateY(16px)}15%,22%{transform:translateY(0)}
+  26%,29%{transform:translateY(16px)}33%,40%{transform:translateY(0)}
+  44%,47%{transform:translateY(16px)}51%,100%{transform:translateY(0)}}
+.tapMv{animation:tapMove 3.8s ease-in-out infinite}
+@keyframes keyFlash{0%,100%{opacity:.3}50%{opacity:1}}
+.kl{animation:keyFlash 1.27s ease-in-out infinite}
+
+@keyframes phoneMove{0%,10%{transform:translate(0,0)}30%,62%{transform:translate(98px,-72px)}80%,100%{transform:translate(0,0)}}
+.phoneMv{animation:phoneMove 6.4s ease-in-out infinite}
+
+@keyframes combStroke{0%,8%{transform:translate(0,0) rotate(0deg)}
+  26%{transform:translate(-16px,50px) rotate(-7deg)}44%{transform:translate(0,0) rotate(0deg)}
+  62%{transform:translate(-16px,50px) rotate(-7deg)}80%,100%{transform:translate(0,0) rotate(0deg)}}
+.combMv{transform-box:view-box;transform-origin:182px 54px;animation:combStroke 4.6s ease-in-out infinite}
+
+@keyframes snipA{0%,4%{transform:rotate(0)}12%,18%{transform:rotate(-22deg)}24%{transform:rotate(0)}
+  32%,38%{transform:rotate(-22deg)}44%{transform:rotate(0)}
+  52%,58%{transform:rotate(-22deg)}64%{transform:rotate(0)}
+  72%,78%{transform:rotate(-22deg)}84%,100%{transform:rotate(0)}}
+@keyframes snipB{0%,4%{transform:rotate(0)}12%,18%{transform:rotate(22deg)}24%{transform:rotate(0)}
+  32%,38%{transform:rotate(22deg)}44%{transform:rotate(0)}
+  52%,58%{transform:rotate(22deg)}64%{transform:rotate(0)}
+  72%,78%{transform:rotate(22deg)}84%,100%{transform:rotate(0)}}
+.bladeA{transform-origin:0 0;animation:snipA 4.4s ease-in-out infinite}
+.bladeB{transform-origin:0 0;animation:snipB 4.4s ease-in-out infinite}
+@keyframes feed{0%,20%{transform:translateX(0)}26%,42%{transform:translateX(-5px)}
+  48%,62%{transform:translateX(-10px)}68%,100%{transform:translateX(-15px)}}
+.feed{animation:feed 4.4s ease-out infinite}
+
+@keyframes restPulse{0%,100%{transform:scale(.88);opacity:.45}50%{transform:scale(1.08);opacity:1}}
+.restPulse{transform-box:fill-box;transform-origin:center;animation:restPulse 3.6s ease-in-out infinite}
+.restPulse2{transform-box:fill-box;transform-origin:center;animation:restPulse 3.6s ease-in-out infinite .5s}
+@keyframes restBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.025)}}
+.restHand{transform-box:fill-box;transform-origin:50% 100%;animation:restBreath 3.6s ease-in-out infinite}
+
+@media(max-width:880px){
+  .stage-body{grid-template-columns:1fr;gap:clamp(10px,1.8vh,18px);align-content:center}
+  .art{width:min(56vw,260px)}
+}
+@media(max-height:720px){.art{width:clamp(150px,17vw,220px)}}
+
+.ctl{display:flex;align-items:center;gap:8px;padding:10px clamp(18px,3.4vw,44px) 14px;
+  border-top:1px solid var(--line);opacity:.42;transition:opacity .2s}
+.ctl:hover,.ctl:focus-within{opacity:1}
+.ctl .note{flex:1;font-size:11px;color:var(--ink3);padding-left:6px}
+.ctl button{background:transparent;border:1px solid var(--line2);border-radius:8px;
+  padding:7px 13px;font-size:12px;color:var(--ink2);background:#FCFCFA}
+.ctl button:hover{border-color:var(--ink3);color:var(--ink)}
+.ctl button[data-act="end"]{color:#8C2F2A;border-color:rgba(140,47,42,.3)}
+
+.flash{position:fixed;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:60;transition:opacity .09s ease}
+.flash.on{opacity:.55}
+
+#done.on{display:flex;align-items:center;justify-content:center;min-height:100dvh;padding:28px 20px}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin:20px 0 22px}
+.stat{display:flex;flex-direction:column;gap:3px;padding:10px 15px;border:1px solid var(--line);
+  border-radius:10px;background:#FCFCFA;min-width:96px}
+.stat b{font-size:17px;font-weight:500;font-variant-numeric:tabular-nums}
+.stat span{font-size:11px;color:var(--ink3)}
+.stat.ok b{color:var(--teal)}
+
+.tblwrap{max-height:clamp(170px,52vh,520px);overflow:auto;border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{position:sticky;top:0;background:#F7F6F1;font-weight:500;color:var(--ink2);font-size:11px;
+  letter-spacing:.04em;text-transform:uppercase}
+td{color:var(--ink2);font-variant-numeric:tabular-nums}
+td.lbl{color:var(--ink);font-weight:500}
+tr:last-child td{border-bottom:0}
+
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.actions button{height:46px;padding:0 18px;border-radius:10px;border:1px solid var(--line2);
+  background:#FCFCFA;font-size:13px;font-weight:500}
+.actions button:hover{border-color:var(--ink3)}
+.actions button.primary{background:var(--teal);border-color:var(--teal);color:#fff}
+.actions button.primary:hover{background:#0C5C48}
+
+.archive{display:flex;align-items:center;gap:12px;margin-top:16px;padding-top:16px;
+  border-top:1px solid var(--line);font-size:12px;color:var(--ink3)}
+.archive[hidden]{display:none}
+.archive button{background:transparent;border:0;padding:0;color:var(--teal);font-size:12px;
+  font-weight:500;text-decoration:underline;text-underline-offset:2px}
+
+.send-note{margin:10px 0 0;font-size:12px;line-height:1.75;color:var(--ink3)}
+
+.toast{position:fixed;left:16px;bottom:16px;z-index:60;max-width:390px;
+  background:#FBF1DE;border:1px solid #E4CFA6;color:#7A4E08;border-radius:11px;
+  padding:11px 14px;font-size:12px;line-height:1.65;box-shadow:0 4px 14px rgba(27,27,25,.09)}
+.toast[hidden]{display:none}
+.toast b{font-weight:600}
+
+@media(max-height:820px){
+  .tblwrap{max-height:clamp(140px,24vh,260px)}
+  .stats{margin:16px 0 18px}
+}
+</style>
+</head>
+<body>
+
+<div class="flash" id="flash"></div>
+<div class="toast" id="toast" hidden></div>
+
+<section class="screen on" id="setup">
+  <div class="card">
+    <div class="eyebrow">Science Day · data collection</div>
+    <h1>Gesture acquisition</h1>
+    <p class="lede">A fixed ten-minute session. The order is randomised: all eight gestures appear
+      at least once, drinking appears twice, and no gesture repeats back to back.</p>
+
+    <div class="grid">
+      <label class="field"><span>Subject ID</span>
+        <input id="f-subject" type="text" placeholder="S01" autocomplete="off" spellcheck="false">
+      </label>
+      <label class="field"><span>Session number</span>
+        <input id="f-session" type="number" value="1" min="1" step="1">
+      </label>
+      <div class="field"><span>Dominant hand</span>
+        <div class="seg" id="seg-hand">
+          <button type="button" data-hand="R" aria-pressed="true">Right</button>
+          <button type="button" data-hand="L" aria-pressed="false">Left</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="send-note">Nothing is emailed from this page. The records download to your Downloads
+      folder when the session ends, and the closing screen can also write a ready-made email draft
+      with the CSV attached.</p>
+
+    <div class="proto">
+      <div class="proto-row">
+        <label for="f-perform">Perform window</label>
+        <input id="f-perform" type="number" value="30" min="10" max="35" step="1">
+        <span class="unit">sec per trial</span>
+      </div>
+      <p class="budget" id="budget"></p>
+    </div>
+
+    <div class="toggle">
+      <input id="f-audio" type="checkbox" checked>
+      <label for="f-audio">Audio cues and screen flash at every transition (helps video alignment)</label>
+    </div>
+
+    <details class="props">
+      <summary>Props to prepare before the first subject</summary>
+      <ul>
+        <li>Glass of water, plus a jug to refill it</li>
+        <li>Small bowl of almonds</li>
+        <li>Bottle with a screw cap (opened, for pouring)</li>
+        <li>Computer keyboard within reach</li>
+        <li>Phone (any handset)</li>
+        <li>Comb</li>
+        <li>Scissors and a few sheets of paper</li>
+        <li>Table and chair: the subject sits comfortably, forearms supported</li>
+      </ul>
+    </details>
+
+    <button class="start" id="btn-start">Start session</button>
+    <p class="hint">Resting position: hands relaxed on the table, forearms supported, no movement.<br>
+      <span class="kbd">Space</span> pause · <span class="kbd">→</span> skip · <span class="kbd">←</span> redo · <span class="kbd">F</span> fullscreen</p>
+
+    <div class="archive" id="archive-bar" hidden>
+      <span id="archive-count"></span>
+      <button type="button" id="btn-archive-csv">Download all as one CSV</button>
+      <button type="button" id="btn-archive">Download archive (JSON)</button>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="run">
+  <header class="hud">
+    <div class="l" id="hud-trial">Trial 1 / 15</div>
+    <div class="track"><div class="fill" id="hud-fill"></div></div>
+    <div class="r" id="hud-clock">00:00 / 10:00</div>
+  </header>
+
+  <main class="stage" id="stage" data-phase="lead">
+    <div class="stage-body">
+      <div class="txt">
+        <div class="phase" id="ph-label">Settle in</div>
+        <h2 class="gname" id="ph-title">Sit comfortably</h2>
+        <p class="ginstr" id="ph-sub">Hands relaxed on the table. The first gesture starts in a moment.</p>
+        <div class="chip" id="ph-chip"></div>
+      </div>
+
+      <div class="art" id="art">
+        <svg class="defs" width="0" height="0" aria-hidden="true"><defs>
+          <g id="hf">
+            <rect x="-24" y="-18" width="9" height="36" rx="4.5" fill="#5A5852"/>
+            <rect x="-22" y="-5" width="5" height="10" rx="2.5" fill="#8E8C84"/>
+            <rect x="-16" y="-16" width="38" height="32" rx="14" fill="#F2D8C0"/>
+            <rect x="-8" y="-5" width="24" height="2.6" rx="1.3" fill="#E3C3A6"/>
+            <rect x="-8" y="3" width="24" height="2.6" rx="1.3" fill="#E3C3A6"/>
+          </g>
+          <g id="hp">
+            <rect x="-24" y="-18" width="9" height="36" rx="4.5" fill="#5A5852"/>
+            <rect x="-22" y="-5" width="5" height="10" rx="2.5" fill="#8E8C84"/>
+            <rect x="-16" y="-16" width="38" height="32" rx="14" fill="#F2D8C0"/>
+            <rect x="1" y="9" width="11" height="30" rx="5.5" fill="#F2D8C0"/>
+            <rect x="-8" y="-6" width="18" height="2.6" rx="1.3" fill="#E3C3A6"/>
+            <rect x="-8" y="1.5" width="18" height="2.6" rx="1.3" fill="#E3C3A6"/>
+          </g>
+          <g id="hd">
+            <circle cx="0" cy="0" r="30" fill="#F2D8C0"/>
+            <path d="M-30 -4 l-11 7 11 7z" fill="#F2D8C0"/>
+            <circle cx="-15" cy="-9" r="2.8" fill="#43423E"/>
+            <path d="M-27 12 q8 7 16 1" fill="none" stroke="#43423E" stroke-width="2.2" stroke-linecap="round"/>
+          </g>
+        </defs></svg>
+
+        <div class="scene active" data-g="rest"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <g class="restPulse"><circle cx="150" cy="108" r="46" fill="none" stroke="#EAE6DA" stroke-width="2"/></g>
+          <g class="restPulse2"><circle cx="150" cy="108" r="30" fill="none" stroke="#F0ECE2" stroke-width="2"/></g>
+          <g class="restHand">
+            <g fill="#F2D8C0">
+              <rect x="124" y="112" width="12" height="42" rx="6"/>
+              <rect x="138" y="106" width="12" height="48" rx="6"/>
+              <rect x="152" y="108" width="12" height="46" rx="6"/>
+              <rect x="166" y="116" width="12" height="38" rx="6"/>
+            </g>
+            <rect x="110" y="148" width="12" height="34" rx="6" fill="#F2D8C0" transform="rotate(-28 116 165)"/>
+            <rect x="120" y="148" width="60" height="48" rx="17" fill="#F2D8C0"/>
+            <rect x="118" y="181" width="64" height="13" rx="6" fill="#5A5852"/>
+            <rect x="138" y="184" width="24" height="7" rx="3.5" fill="#8E8C84"/>
+          </g>
+        </svg></div>
+
+        <div class="scene" data-g="drink"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <use href="#hd" x="250" y="118"/>
+          <g class="mvDrink">
+            <path d="M80 150 h36 l-4 46 h-28 z" fill="#FFFFFF" stroke="#43423E" stroke-width="2" stroke-linejoin="round"/>
+            <path d="M83 174 h30 l-3 19 h-24 z" fill="#8FCBE0"/>
+            <use href="#hf" x="64" y="170"/>
+          </g>
+        </svg></div>
+
+        <div class="scene" data-g="eat"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <use href="#hd" x="244" y="88"/>
+          <g class="mvEat"><use href="#hf" x="78" y="182"/></g>
+          <g class="almond"><ellipse cx="108" cy="190" rx="8" ry="5.5" fill="#C08A54"/></g>
+        </svg></div>
+
+        <div class="scene" data-g="open"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <rect x="90" y="138" width="46" height="60" rx="9" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
+          <rect x="105" y="114" width="16" height="26" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
+          <rect x="102" y="107" width="22" height="9" rx="3" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
+          <g class="handOpenMv"><use href="#hf" x="138" y="101"/></g>
+          <g class="capMv"><rect x="101" y="93" width="24" height="16" rx="4" fill="#D9724F"/></g>
+        </svg></div>
+
+        <div class="scene" data-g="pour"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <path d="M172 152 h34 l-4 44 h-26 z" fill="#FFFFFF" stroke="#43423E" stroke-width="2" stroke-linejoin="round"/>
+          <g class="waterRise"><rect x="175" y="162" width="28" height="34" fill="#8FCBE0"/></g>
+          <path class="stream" d="M151 139 q26 9 33 26" fill="none" stroke="#8FCBE0" stroke-width="6" stroke-linecap="round"/>
+          <g class="pourMv">
+            <rect x="88" y="112" width="38" height="76" rx="9" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
+            <rect x="101" y="90" width="14" height="24" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
+            <rect x="99" y="84" width="18" height="7" rx="3" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
+            <use href="#hf" x="78" y="152"/>
+          </g>
+        </svg></div>
+
+        <div class="scene" data-g="type"><svg viewBox="0 0 300 240">
+          <defs>
+            <pattern id="keysP" width="17" height="12" patternUnits="userSpaceOnUse">
+              <rect width="13" height="8" rx="2" fill="#CFC9BB"/>
+            </pattern>
+          </defs>
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <rect x="88" y="48" width="124" height="118" rx="9" fill="#EDE9DE" stroke="#43423E" stroke-width="2"/>
+          <rect x="96" y="56" width="108" height="102" rx="4" fill="#DCE9EE"/>
+          <rect x="76" y="166" width="148" height="32" rx="9" fill="#F4F1E9" stroke="#43423E" stroke-width="2"/>
+          <rect x="84" y="170" width="136" height="24" fill="url(#keysP)"/>
+          <g class="kl">
+            <rect x="118" y="176" width="13" height="8" rx="2" fill="#7FBFD6"/>
+            <rect x="152" y="176" width="13" height="8" rx="2" fill="#7FBFD6"/>
+            <rect x="186" y="176" width="13" height="8" rx="2" fill="#7FBFD6"/>
+          </g>
+          <g class="tapMv"><use href="#hp" x="150" y="132"/></g>
+        </svg></div>
+
+        <div class="scene" data-g="phone"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <use href="#hd" x="246" y="86"/>
+          <g class="phoneMv">
+            <rect x="86" y="138" width="32" height="54" rx="8" fill="#43423E"/>
+            <rect x="90" y="143" width="24" height="40" rx="3" fill="#9FD8E8"/>
+            <use href="#hf" x="84" y="166"/>
+          </g>
+        </svg></div>
+
+        <div class="scene" data-g="comb"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <circle cx="240" cy="92" r="31" fill="#F2D8C0"/>
+          <path d="M208 93 A32 32 0 0 1 272 93 Q256 78 240 78 Q224 78 208 93 Z" fill="#5C4033"/>
+          <circle cx="226" cy="98" r="2.6" fill="#43423E"/>
+          <path d="M214 108 q8 6 15 1" fill="none" stroke="#43423E" stroke-width="2.2" stroke-linecap="round"/>
+          <g class="combMv">
+            <g transform="translate(182,54)">
+              <use href="#hf" x="0" y="0"/>
+              <g transform="translate(18,2) rotate(18)">
+                <rect x="0" y="-5" width="46" height="10" rx="5" fill="#C08A54"/>
+                <g fill="#8A5F3C">
+                  <rect x="6" y="5" width="3.2" height="13" rx="1.6"/>
+                  <rect x="13" y="5" width="3.2" height="13" rx="1.6"/>
+                  <rect x="20" y="5" width="3.2" height="13" rx="1.6"/>
+                  <rect x="27" y="5" width="3.2" height="13" rx="1.6"/>
+                  <rect x="34" y="5" width="3.2" height="13" rx="1.6"/>
+                  <rect x="41" y="5" width="3.2" height="13" rx="1.6"/>
+                </g>
+              </g>
+            </g>
+          </g>
+        </svg></div>
+
+        <div class="scene" data-g="cut"><svg viewBox="0 0 300 240">
+          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
+          <g class="feed">
+            <rect x="94" y="96" width="64" height="94" rx="3" fill="#FFFFFF" stroke="#43423E" stroke-width="2"/>
+            <use href="#hf" x="78" y="150"/>
+          </g>
+          <g transform="translate(158,150)">
+            <g class="bladeA">
+              <path d="M4 0 L-54 -7 q-9 .5 -9 5 t9 5 L4 0 z" fill="#8FB0C0" stroke="#5E7C8C" stroke-width="1.2"/>
+              <circle cx="24" cy="-13" r="10" fill="none" stroke="#43423E" stroke-width="2.6"/>
+            </g>
+            <g class="bladeB">
+              <path d="M4 0 L-54 7 q-9 -.5 -9 -5 t9 -5 L4 0 z" fill="#A9C6D3" stroke="#5E7C8C" stroke-width="1.2"/>
+              <circle cx="24" cy="13" r="10" fill="none" stroke="#43423E" stroke-width="2.6"/>
+            </g>
+            <circle r="3.4" fill="#43423E"/>
+            <use href="#hf" x="52" y="0"/>
+          </g>
+        </svg></div>
+      </div>
+    </div>
+    <div class="meter">
+      <div class="count" id="ph-count">10</div>
+      <div class="unit">sec</div>
+      <div class="win"><div id="ph-fill"></div></div>
+    </div>
+  </main>
+
+  <footer class="ctl">
+    <button type="button" data-act="pause">Pause</button>
+    <button type="button" data-act="skip">Skip</button>
+    <button type="button" data-act="redo">Redo</button>
+    <button type="button" data-act="end">End session</button>
+    <div class="note" id="ctl-note"></div>
+  </footer>
+</section>
+
+<section class="screen" id="done">
+  <div class="card wide">
+    <div class="eyebrow">Session complete</div>
+    <h1 id="done-title">Subject S01 · 15 trials</h1>
+    <div class="stats" id="done-stats"></div>
+    <div class="tblwrap"><table id="done-tbl"><thead><tr>
+      <th>#</th><th>Gesture</th><th>Start</th><th>End</th><th>Dur</th><th>Status</th>
+    </tr></thead><tbody></tbody></table></div>
+    <div class="actions">
+      <button type="button" class="primary" id="btn-csv">Download CSV</button>
+      <button type="button" id="btn-json">Download JSON</button>
+      <button type="button" id="btn-eml">Email draft (.eml)</button>
+      <button type="button" id="btn-new">New session</button>
+    </div>
+
+    <p class="hint" id="done-note">The CSV was saved to your Downloads folder.</p>
+
+    <div class="archive" id="done-archive" hidden>
+      <span id="done-archive-count"></span>
+      <button type="button" id="btn-done-archive-csv">Download all as one CSV</button>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+"use strict";
+
+var TOTAL = 600000, READY = 3000;
+var N = 13, TRIAL = 30000, REST = 15000, LEAD = 15000, CYCLE = 45000;
+
+function applyProtocol(n, perfS){
+  N = n;
+  TRIAL = Math.round(perfS * 1000);
+  REST = Math.floor((TOTAL - N * TRIAL) / N);
+  CYCLE = TRIAL + REST;
+  LEAD = TOTAL - N * CYCLE + REST;
+  READY = Math.min(3000, Math.round(REST * 0.5));
+}
+function scheduleEnd(){ return LEAD + N * CYCLE - REST; }
+
+var G = [
+  {id:"drink", name:"Drinking",          prop:"Glass of water",
+   instr:"Take the glass with your dominant hand, drink some water, then put the glass back on the table."},
+  {id:"eat",   name:"Eating",            prop:"One almond",
+   instr:"Pick up a single almond with your dominant hand, bring it to your mouth as if taking a pill, then lower your hand."},
+  {id:"open",  name:"Opening a bottle",  prop:"Bottle with cap",
+   instr:"Hold the bottle steady with your other hand, unscrew the cap with your dominant hand, and place the cap on the table."},
+  {id:"pour",  name:"Pouring water",     prop:"Bottle and glass",
+   instr:"Take the opened bottle with your dominant hand, pour some water into the glass, then put the bottle back on the table."},
+  {id:"type",  name:"Typing",            prop:"Keyboard",
+   instr:"Type at least ten characters on the keyboard using only the index finger of your dominant hand."},
+  {id:"phone", name:"Answering the phone", prop:"Phone",
+   instr:"Pick the phone up with your dominant hand, bring it to your ear, hold it there for three to five seconds, then put it back on the table."},
+  {id:"comb",  name:"Combing hair",      prop:"Comb",
+   instr:"Take the comb with your dominant hand, comb your hair for a few seconds, then put the comb back on the table."},
+  {id:"cut",   name:"Cutting",           prop:"Scissors and paper",
+   instr:"Hold the scissors in your dominant hand, take a sheet of paper, make three or four cuts, then put both back on the table."}
+];
+var BY_ID = {};
+G.forEach(function(g){ BY_ID[g.id] = g; });
+
+var el = function(id){ return document.getElementById(id); };
+
+/* True when the page is not a top-level document: the in-app preview panel runs
+   it in a sandboxed frame, and sandboxed frames drop <a download> clicks without
+   an error. Detect it so the UI can say so instead of doing nothing. */
+function embedded(){
+  try { if (window.self !== window.top) return true; } catch(e){ return true; }
+  return location.protocol === "http:" && /^(127\.0\.0\.1|localhost)$/.test(location.hostname);
+}
+
+var S = {
+  subject:"", dh:"R", sessionNo:1, endpoint:"", audio:true,
+  order:[], trials:[], events:[],
+  startEpoch:0, startPerf:0, pausedAccum:0, pausePerf:0, paused:false,
+  running:false, finished:false, raf:0
+};
+
+var prev = {phase:null, idx:-2};
+var lastSec = -1;
+var R = {phase:"", label:"", title:"", sub:"", chip:"", count:"", trial:"", clock:"", fill:-1, fill2:-1, gid:""};
+var actx = null;
+
+function pad(n){ return n < 10 ? "0" + n : "" + n; }
+function shuffle(a){
+  for (var i = a.length - 1; i > 0; i--){ var j = Math.floor(Math.random() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  return a;
+}
+
+function buildOrder(n){
+  var ids = G.map(function(g){ return g.id; });
+  var pool = ids.filter(function(id){ return id !== "drink"; });
+  var items = null;
+  for (var attempt = 0; attempt < 4000; attempt++){
+    items = ids.slice();
+    items.push("drink");
+    for (var k = ids.length + 1; k < n; k++) items.push(pool[Math.floor(Math.random() * pool.length)]);
+    shuffle(items);
+    if (validOrder(items)) return items;
+  }
+  return items;
+}
+function validOrder(a){
+  for (var i = 1; i < a.length; i++) if (a[i] === a[i-1]) return false;
+  var d = [];
+  for (var j = 0; j < a.length; j++) if (a[j] === "drink") d.push(j);
+  if (d.length >= 2 && Math.abs(d[0] - d[1]) < 3) return false;
+  for (var m = 0; m < a.length; m++){
+    var c = 0;
+    for (var n = 0; n < a.length; n++) if (a[n] === a[m]) c++;
+    if (c > 3) return false;
+  }
+  return true;
+}
+
+function iso(ms){
+  var d = new Date(ms);
+  var off = -d.getTimezoneOffset();
+  var sg = off >= 0 ? "+" : "-";
+  var a = Math.abs(off);
+  return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) + "T" +
+         pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds()) + "." +
+         String(d.getMilliseconds()).padStart(3, "0") + sg + pad(Math.floor(a/60)) + ":" + pad(a%60);
+}
+function hms(ms){
+  var d = new Date(ms);
+  return pad(d.getHours()) + ":" + pad(d.getMinutes()) + ":" + pad(d.getSeconds());
+}
+function mmss(ms){
+  var t = Math.max(0, Math.floor(ms / 1000));
+  return pad(Math.floor(t / 60)) + ":" + pad(t % 60);
+}
+
+function nowPerf(){ return performance.now(); }
+function sessionMs(){
+  var n = nowPerf();
+  return n - S.startPerf - S.pausedAccum - (S.paused ? (n - S.pausePerf) : 0);
+}
+function epochNow(){ return Date.now(); }
+function jumpTo(targetSessionMs){
+  var delta = targetSessionMs - sessionMs();
+  S.startPerf -= delta;
+}
+
+function log(type, extra){
+  var s = sessionMs();
+  var row = { t_session_ms: Math.round(s), t_epoch_ms: epochNow(), t_iso: iso(epochNow()), event: type };
+  if (extra) for (var k in extra) row[k] = extra[k];
+  S.events.push(row);
+}
+
+function beep(freq, dur, gain){
+  if (!S.audio || !actx) return;
+  try {
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = "sine"; o.frequency.value = freq;
+    var t = actx.currentTime, d = dur || 0.09, v = gain || 0.14;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(v, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t); o.stop(t + d + 0.03);
+  } catch(e){}
+}
+function flash(){
+  var f = el("flash");
+  f.classList.add("on");
+  setTimeout(function(){ f.classList.remove("on"); }, 90);
+}
+
+function openTrial(i, s, drift){
+  var tr = S.trials[i];
+  if (!tr) return;
+  var e = epochNow() - Math.max(0, drift);
+  tr.actualStart = e;
+  tr.drift = Math.round(drift);
+  if (!tr.firstStart) tr.firstStart = e;
+  log("TRIAL_START", { trial: i + 1, label: tr.label, order_pos: i + 1 });
+}
+function closeTrial(i, status){
+  var tr = S.trials[i];
+  if (!tr || tr.actualEnd) return;
+  var e = epochNow();
+  tr.actualEnd = e;
+  if (tr.status === "pending") tr.status = status || "completed";
+  log("TRIAL_END", { trial: i + 1, label: tr.label, status: tr.status });
+}
+
+function readPerform(){ return Math.round(+el("f-perform").value || 0); }
+
+function protoCheck(){
+  var p = readPerform();
+  var restAt15 = TOTAL / 1000 / 15 - p;
+  var restAt9 = TOTAL / 1000 / 9 - p;
+  var err = "";
+  if (p < 10) err = "The perform window needs at least 10 s.";
+  else if (restAt15 < 5) err = "With 9–15 trials the perform window can be at most 35 s.";
+  return { p: p, rMin: restAt15, rMax: restAt9, err: err, ok: !err };
+}
+
+function refreshBudget(){
+  var c = protoCheck();
+  var b = el("budget");
+  if (!c.ok){
+    b.className = "budget bad";
+    b.textContent = c.err;
+  } else {
+    b.className = "budget";
+    b.innerHTML = "<b>9–15</b> trials drawn at random · rest follows at <b>" +
+      Math.round(c.rMin) + "–" + Math.round(c.rMax) + " s</b>, so every session is exactly " + mmss(TOTAL) + ".";
+  }
+  el("btn-start").disabled = !c.ok;
+  return c;
+}
+
+function startSession(){
+  var subj = el("f-subject").value.trim();
+  if (!subj){ el("f-subject").focus(); el("f-subject").style.borderColor = "#B4443D"; return; }
+  var c = protoCheck();
+  if (!c.ok){ refreshBudget(); return; }
+  applyProtocol(9 + Math.floor(Math.random() * 7), c.p);
+
+  S.subject = subj;
+  S.sessionNo = Math.max(1, parseInt(el("f-session").value, 10) || 1);
+  S.audio = el("f-audio").checked;
+  S.order = buildOrder(N);
+  S.trials = S.order.map(function(id, i){
+    return {
+      idx: i, id: id, label: BY_ID[id].name, prop: BY_ID[id].prop,
+      plannedStart: LEAD + i * CYCLE, plannedEnd: LEAD + i * CYCLE + TRIAL,
+      actualStart: 0, actualEnd: 0, status: "pending", drift: 0, firstStart: 0
+    };
+  });
+  S.events = [];
+  S.pausedAccum = 0; S.paused = false; S.finished = false; S.running = true;
+
+  try {
+    actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state === "suspended") actx.resume();
+  } catch(e){ actx = null; }
+
+  S.startEpoch = epochNow();
+  S.startPerf = nowPerf();
+  prev = {phase:null, idx:-2};
+  lastSec = -1;
+
+  el("setup").classList.remove("on");
+  el("done").classList.remove("on");
+  el("run").classList.add("on");
+  document.body.classList.add("locked");
+  el("ctl-note").textContent = S.subject + " · DH " + (S.dh === "R" ? "right" : "left") + " · session " + S.sessionNo;
+
+  log("SESSION_START", { subject: S.subject, dh_side: S.dh, session_no: S.sessionNo, n_trials: N });
+  requestFullscreen();
+  keepAwake();
+  if (S.raf) cancelAnimationFrame(S.raf);
+  S.raf = requestAnimationFrame(tick);
+}
+
+function tick(){
+  if (!S.running) return;
+  if (!S.paused) update();
+  S.raf = requestAnimationFrame(tick);
+}
+
+function update(){
+  var s = sessionMs();
+  if (s >= TOTAL){ finishSession(); return; }
+
+  var phase, idx, remain, winStart, winLen;
+  var endOfSchedule = scheduleEnd();
+  if (s < LEAD){
+    phase = "lead"; idx = -1; remain = LEAD - s; winStart = 0; winLen = LEAD;
+  } else if (s >= endOfSchedule){
+    phase = "tail"; idx = N - 1; remain = TOTAL - s;
+    winStart = endOfSchedule; winLen = Math.max(1000, TOTAL - endOfSchedule);
+  } else {
+    var k = Math.floor((s - LEAD) / CYCLE);
+    var off = (s - LEAD) - k * CYCLE;
+    if (off < TRIAL){
+      phase = "perform"; idx = k; remain = TRIAL - off; winStart = LEAD + k * CYCLE; winLen = TRIAL;
+    } else {
+      phase = "rest"; idx = k; remain = CYCLE - off; winStart = LEAD + k * CYCLE + TRIAL; winLen = REST;
+    }
+  }
+  var sub = (phase === "rest" && remain <= READY) ? "ready" : phase;
+
+  if (phase !== prev.phase || idx !== prev.idx){
+    if (prev.phase === "perform" && prev.idx >= 0) closeTrial(prev.idx, "completed");
+    if (phase === "perform"){
+      var target = LEAD + idx * CYCLE;
+      var drift = s - target;
+      openTrial(idx, s, (drift >= 0 && drift < 1200) ? drift : 0);
+      beep(880, 0.10, 0.16);
+      flash();
+    }
+    if (phase === "rest" && prev.phase === "perform") beep(560, 0.09, 0.10);
+    prev = {phase: phase, idx: idx};
+  }
+
+  render(sub, idx, remain, s, winStart, winLen);
+}
+
+function render(sub, idx, remain, s, winStart, winLen){
+  var stage = el("stage");
+  if (R.phase !== sub){
+    stage.dataset.phase = sub;
+    document.body.dataset.phase = sub;
+    R.phase = sub;
+  }
+
+  var label, title, subt, chip;
+  if (sub === "lead"){
+    label = "Settle in"; title = "Sit comfortably";
+    subt = "Hands relaxed on the table. The first gesture starts in a moment.";
+    chip = "";
+  } else if (sub === "perform"){
+    var g = BY_ID[S.order[idx]];
+    label = "Perform"; title = g.name; subt = g.instr; chip = "Needs · " + g.prop;
+  } else if (sub === "rest"){
+    label = "Rest"; title = "Rest";
+    subt = "Return to the resting position. Hands relaxed on the table, no movement.";
+    chip = "";
+  } else if (sub === "tail"){
+    label = "Rest"; title = "All gestures done";
+    subt = "Stay relaxed until the session ends. Nothing else to do.";
+    chip = "";
+  } else {
+    var gn = BY_ID[S.order[idx + 1]];
+    label = "Get ready"; title = gn ? gn.name : "Last one";
+    subt = "Stay still. This gesture starts in a moment."; chip = "";
+  }
+
+  if (R.label !== label){ el("ph-label").textContent = label; R.label = label; }
+  if (R.title !== title){ el("ph-title").textContent = title; R.title = title; }
+  if (R.sub !== subt){ el("ph-sub").textContent = subt; R.sub = subt; }
+  if (R.chip !== chip){ el("ph-chip").textContent = chip; R.chip = chip; }
+
+  var gid = (sub === "rest" || sub === "lead" || sub === "tail") ? "rest" : S.order[sub === "ready" ? idx + 1 : idx];
+  if (!gid) gid = "rest";
+  if (R.gid !== gid){
+    var scenes = document.querySelectorAll("#art .scene");
+    for (var i = 0; i < scenes.length; i++){
+      if (scenes[i].getAttribute("data-g") === gid) scenes[i].classList.add("active");
+      else scenes[i].classList.remove("active");
+    }
+    R.gid = gid;
+  }
+
+  var sec = Math.ceil(remain / 1000);
+  if (R.count !== sec){ el("ph-count").textContent = sec; R.count = sec; }
+  if (sub === "ready" && sec !== lastSec && sec <= 3 && sec > 0) beep(660, 0.05, 0.08);
+  lastSec = sec;
+
+  var p2 = Math.round(Math.min(1, (s - winStart) / winLen) * 1000) / 10;
+  if (R.fill2 !== p2){ el("ph-fill").style.width = p2 + "%"; R.fill2 = p2; }
+
+  var trialTxt = idx >= 0 ? "Trial " + ((sub === "ready" ? idx + 2 : idx + 1)) + " / " + N : "Settle in";
+  if (R.trial !== trialTxt){ el("hud-trial").textContent = trialTxt; R.trial = trialTxt; }
+
+  var clock = mmss(s) + " / 10:00";
+  if (R.clock !== clock){ el("hud-clock").textContent = clock; R.clock = clock; }
+
+  var p1 = Math.round(Math.min(1, s / TOTAL) * 1000) / 10;
+  if (R.fill !== p1){ el("hud-fill").style.width = p1 + "%"; R.fill = p1; }
+}
+
+function togglePause(){
+  if (!S.running) return;
+  if (!S.paused){
+    S.paused = true; S.pausePerf = nowPerf();
+    log("PAUSE");
+    el("ctl-note").textContent = "Paused";
+  } else {
+    S.pausedAccum += nowPerf() - S.pausePerf;
+    S.paused = false;
+    log("RESUME");
+    el("ctl-note").textContent = S.subject + " · DH " + (S.dh === "R" ? "right" : "left");
+  }
+  document.querySelector('[data-act="pause"]').textContent = S.paused ? "Resume" : "Pause";
+}
+
+function skipTrial(){
+  if (!S.running || S.paused) return;
+  var s = sessionMs();
+  if (s < LEAD) return;
+  var k = Math.floor((s - LEAD) / CYCLE);
+  var tr = S.trials[k];
+  if (tr){
+    tr.status = "skipped";
+    if (!tr.actualEnd) tr.actualEnd = epochNow();
+    log("SKIP", { trial: k + 1, label: tr.label });
+  }
+  jumpTo(LEAD + (k + 1) * CYCLE);
+  prev = {phase:null, idx:-2};
+}
+
+function redoTrial(){
+  if (!S.running || S.paused) return;
+  var s = sessionMs();
+  if (s < LEAD) return;
+  var k = Math.floor((s - LEAD) / CYCLE);
+  var tr = S.trials[k];
+  if (!tr) return;
+  tr.status = "pending"; tr.actualEnd = 0; tr.actualStart = 0; tr.repeats = (tr.repeats || 0) + 1;
+  log("REDO", { trial: k + 1, label: tr.label });
+  jumpTo(LEAD + k * CYCLE);
+  prev = {phase:null, idx:-2};
+}
+
+function finishSession(){
+  if (S.finished) return;
+  S.finished = true; S.running = false;
+  if (S.raf) cancelAnimationFrame(S.raf);
+
+  var sNow = sessionMs();
+  var offset = epochNow() - sNow;
+
+  for (var i = 0; i < S.trials.length; i++){
+    var tr = S.trials[i];
+    if (!tr.actualStart && tr.status === "pending"){
+      tr.status = "not_reached";
+      continue;
+    }
+    if (!tr.actualEnd){
+      tr.actualEnd = offset + tr.plannedEnd;
+      if (tr.status === "pending") tr.status = (sNow >= tr.plannedEnd - 600) ? "completed" : "aborted";
+    }
+  }
+  log("SESSION_END", { subject: S.subject, n_trials: N });
+  saveArchive();
+  showDone();
+  try { download("csv", true); } catch(e){}
+  pushEndpoint();
+}
+
+function summary(){
+  var counts = {};
+  S.trials.forEach(function(t){
+    if (t.status !== "not_reached") counts[t.label] = (counts[t.label] || 0) + 1;
+  });
+  return counts;
+}
+
+function showDone(){
+  el("run").classList.remove("on");
+  el("done").classList.add("on");
+  document.body.classList.remove("locked");
+  document.body.dataset.phase = "";
+  el("done-title").textContent = "Subject " + S.subject + " · " + N + " trials";
+
+  var counts = summary();
+  var covered = Object.keys(counts).length;
+  var drinkN = counts["Drinking"] || 0;
+  var box = el("done-stats");
+  box.innerHTML = "";
+  function stat(v, l, ok){
+    var d = document.createElement("div");
+    d.className = "stat" + (ok ? " ok" : "");
+    d.innerHTML = "<b>" + v + "</b><span>" + l + "</span>";
+    box.appendChild(d);
+  }
+  var doneN = S.trials.filter(function(t){ return t.status === "completed"; }).length;
+  stat(covered + "/8", "gestures covered", covered === 8);
+  stat(drinkN, "drinking trials", drinkN >= 2);
+  stat(doneN + "/" + N, "trials completed", doneN === N);
+  stat(mmss(TOTAL), "session length", true);
+
+  var tb = el("done-tbl").querySelector("tbody");
+  tb.innerHTML = "";
+  S.trials.forEach(function(t){
+    var tr = document.createElement("tr");
+    tr.innerHTML = "<td>" + (t.idx + 1) + "</td>" +
+      "<td class='lbl'>" + t.label + "</td>" +
+      "<td>" + (t.actualStart ? hms(t.actualStart) : "—") + "</td>" +
+      "<td>" + (t.actualEnd ? hms(t.actualEnd) : "—") + "</td>" +
+      "<td>" + ((t.actualStart && t.actualEnd) ? ((t.actualEnd - t.actualStart) / 1000).toFixed(1) + " s" : "—") + "</td>" +
+      "<td>" + t.status + "</td>";
+    tb.appendChild(tr);
+  });
+
+  setDoneNote(S.endpoint
+    ? "Sending to the collection endpoint…"
+    : "The CSV was saved to your Downloads folder.", "");
+  refreshArchive();
+}
+
+function q(v){
+  var s = String(v == null ? "" : v);
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+
+var CSV_HEAD = ["subject_id","dh_side","session_no","session_start_iso","session_start_epoch_ms",
+  "trial_idx","order_pos","label","prop","planned_start_s","planned_end_s",
+  "actual_start_iso","actual_start_epoch_ms","actual_end_iso","actual_end_epoch_ms",
+  "duration_s","status","detected_lag_ms","repeats"];
+
+function csvRow(sess, t){
+  var has = !!t.actualStart;
+  return [
+    q(sess.subject_id), q(sess.dh_side), sess.session_no, q(sess.start_iso), sess.start_epoch_ms,
+    t.idx + 1, t.idx + 1, q(t.label), q(t.prop),
+    (t.plannedStart / 1000).toFixed(3), (t.plannedEnd / 1000).toFixed(3),
+    has ? q(iso(t.actualStart)) : "", has ? Math.round(t.actualStart) : "",
+    has ? q(iso(t.actualEnd)) : "", has ? Math.round(t.actualEnd) : "",
+    has ? ((t.actualEnd - t.actualStart) / 1000).toFixed(3) : "",
+    t.status, t.drift || 0, t.repeats || 0
+  ].join(",");
+}
+
+function csvText(){
+  var sess = {
+    subject_id: S.subject, dh_side: S.dh, session_no: S.sessionNo,
+    start_iso: iso(S.startEpoch), start_epoch_ms: S.startEpoch
+  };
+  return [CSV_HEAD.join(",")].concat(S.trials.map(function(t){
+    return csvRow(sess, t);
+  })).join("\n");
+}
+
+function archiveCsv(){
+  var all = [];
+  try { all = JSON.parse(localStorage.getItem("ga_archive_v1") || "[]"); } catch(e){}
+  var lines = [CSV_HEAD.join(",")];
+  all.forEach(function(rec){
+    var p;
+    try { p = JSON.parse(rec.payload); } catch(e){ return; }
+    if (!p || !p.session || !p.trials) return;
+    p.trials.forEach(function(t){ lines.push(csvRow(p.session, t)); });
+  });
+  return lines.join("\n");
+}
+
+function jsonText(){
+  return JSON.stringify({
+    app: "gesture-acquisition",
+    version: 1,
+    protocol: { trials: N, trial_s: TRIAL/1000, rest_s: REST/1000, lead_in_s: LEAD/1000,
+      total_s: TOTAL/1000, schedule_end_s: scheduleEnd()/1000 },
+    session: {
+      subject_id: S.subject, dh_side: S.dh, session_no: S.sessionNo,
+      start_iso: iso(S.startEpoch), start_epoch_ms: S.startEpoch,
+      end_iso: iso(S.startEpoch + TOTAL), end_epoch_ms: S.startEpoch + TOTAL,
+      paused_ms: Math.round(S.pausedAccum), user_agent: navigator.userAgent
+    },
+    order: S.order,
+    trials: S.trials,
+    events: S.events
+  }, null, 2);
+}
+
+function dateStamp(){
+  var d = new Date();
+  return d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + "-" +
+    pad(d.getHours()) + pad(d.getMinutes());
+}
+
+function fileName(ext){
+  var d = new Date(S.startEpoch);
+  var stamp = d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes());
+  var subj = (S.subject || "subject").replace(/[^\w\-]+/g, "");
+  return "gesture_" + subj + "_s" + S.sessionNo + "_" + stamp + "." + ext;
+}
+
+function download(kind, auto){
+  var text, mime;
+  if (kind === "csv"){ text = csvText(); mime = "text/csv;charset=utf-8"; }
+  else if (kind === "json"){ text = jsonText(); mime = "application/json;charset=utf-8"; }
+  else { text = emlText(); mime = "message/rfc822"; }
+  var blob = new Blob([text], { type: mime });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = fileName(kind);
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 4000);
+}
+
+function emailText(){
+  var rows = ["trial\tlabel\tstart_epoch_ms\tend_epoch_ms\tstart_iso"];
+  S.trials.forEach(function(t){
+    rows.push((t.idx + 1) + "\t" + t.label + "\t" +
+      (t.actualStart ? Math.round(t.actualStart) : "-") + "\t" +
+      (t.actualEnd ? Math.round(t.actualEnd) : "-") + "\t" +
+      (t.actualStart ? iso(t.actualStart) : "-"));
+  });
+  return [
+    "Gesture acquisition session",
+    "",
+    "Subject: " + S.subject + "   Dominant hand: " + (S.dh === "R" ? "right" : "left") +
+      "   Session: " + S.sessionNo,
+    "Start: " + iso(S.startEpoch) + "  (epoch ms " + S.startEpoch + ")",
+    "Protocol: " + N + " trials x " + (TRIAL / 1000) + " s, " + (REST / 1000) + " s rest, " +
+      (TOTAL / 1000) + " s total",
+    "Order: " + S.order.join(" > "),
+    "",
+    rows.join("\n"),
+    "",
+    "Attached file: " + fileName("csv")
+  ].join("\n");
+}
+
+function b64utf8(str){
+  var bytes = new TextEncoder().encode(str);
+  var bin = "";
+  for (var i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin);
+}
+
+function wrap76(s){
+  var out = [];
+  for (var i = 0; i < s.length; i += 76) out.push(s.slice(i, i + 76));
+  return out.join("\r\n");
+}
+
+function emlText(){
+  var b = "----gesture_" + Math.random().toString(36).slice(2);
+  var file = fileName("csv");
+  var subject = "Gesture session " + S.subject + " - " + iso(S.startEpoch).slice(0, 10);
+  return [
+    "Subject: " + subject,
+    "MIME-Version: 1.0",
+    "Content-Type: multipart/mixed; boundary=\"" + b + "\"",
+    "",
+    "This is a multi-part message in MIME format.",
+    "",
+    "--" + b,
+    "Content-Type: text/plain; charset=utf-8",
+    "Content-Transfer-Encoding: 8bit",
+    "",
+    emailText(),
+    "",
+    "--" + b,
+    "Content-Type: text/csv; charset=utf-8; name=\"" + file + "\"",
+    "Content-Disposition: attachment; filename=\"" + file + "\"",
+    "Content-Transfer-Encoding: base64",
+    "",
+    wrap76(b64utf8(csvText())),
+    "",
+    "--" + b + "--",
+    ""
+  ].join("\r\n");
+}
+
+function setDoneNote(msg, tone){
+  var n = el("done-note");
+  if (!n) return;
+  n.textContent = msg;
+  n.style.color = tone === "ok" ? "#0F6E56" : tone === "bad" ? "#A32D2D" : "";
+}
+
+function pushEndpoint(){
+  var url = (S.endpoint || "").trim();
+  if (!url) return;
+  try {
+    fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: jsonText()
+    }).then(function(r){
+      if (r && r.ok) setDoneNote("Uploaded to the collection endpoint.", "ok");
+      else setDoneNote("Endpoint answered HTTP " + (r ? r.status : "?") +
+        " — the local CSV is still the record.", "bad");
+    }).catch(function(){
+      setDoneNote("Upload failed (offline or endpoint unreachable) — the local CSV is still the record.", "bad");
+    });
+  } catch(e){
+    setDoneNote("This browser blocked the upload — the local CSV is still the record.", "bad");
+  }
+}
+
+function saveArchive(){
+  try {
+    var all = JSON.parse(localStorage.getItem("ga_archive_v1") || "[]");
+    all.push({ id: S.subject + "-" + S.startEpoch, subject: S.subject, epoch: S.startEpoch, payload: jsonText() });
+    while (all.length > 60) all.shift();
+    localStorage.setItem("ga_archive_v1", JSON.stringify(all));
+    refreshArchive();
+  } catch(e){}
+}
+
+function refreshArchive(){
+  var all = [];
+  try { all = JSON.parse(localStorage.getItem("ga_archive_v1") || "[]"); } catch(e){}
+  var n = all.length;
+  var txt = n + " session" + (n === 1 ? "" : "s") + " stored on this device";
+  [["archive-bar", "archive-count"], ["done-archive", "done-archive-count"]].forEach(function(p){
+    var bar = el(p[0]), lab = el(p[1]);
+    if (!bar || !lab) return;
+    bar.hidden = !n;
+    lab.textContent = txt;
+  });
+}
+
+function downloadArchive(){
+  var blob = new Blob([archiveCsv()], { type: "text/csv;charset=utf-8" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gesture_all_" + dateStamp() + ".csv";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
+  if (embedded()) setDoneNote("This preview frame blocks downloads — open index.html in Chrome.", "bad");
+}
+
+function requestFullscreen(){
+  try {
+    if (!document.fullscreenElement && document.documentElement.requestFullscreen){
+      document.documentElement.requestFullscreen().catch(function(){});
+    }
+  } catch(e){}
+}
+var wl = null;
+function keepAwake(){
+  try {
+    if ("wakeLock" in navigator){
+      navigator.wakeLock.request("screen").then(function(l){ wl = l; }).catch(function(){});
+    }
+  } catch(e){}
+}
+
+function resetToSetup(){
+  S.running = false; S.finished = false;
+  if (S.raf) cancelAnimationFrame(S.raf);
+  el("done").classList.remove("on");
+  el("run").classList.remove("on");
+  el("setup").classList.add("on");
+  document.body.classList.remove("locked");
+  document.body.dataset.phase = "";
+  prev = {phase:null, idx:-2};
+  refreshArchive();
+  el("f-subject").value = "";
+  el("f-subject").focus();
+}
+
+el("seg-hand").addEventListener("click", function(e){
+  var b = e.target.closest("button");
+  if (!b) return;
+  S.dh = b.dataset.hand;
+  Array.prototype.forEach.call(this.querySelectorAll("button"), function(x){
+    x.setAttribute("aria-pressed", String(x === b));
+  });
+});
+
+el("btn-start").addEventListener("click", startSession);
+el("f-perform").addEventListener("input", refreshBudget);
+el("btn-csv").addEventListener("click", function(){
+  download("csv");
+  setDoneNote(embedded()
+    ? "This preview frame blocks downloads — open index.html in Chrome."
+    : "CSV saved to your Downloads folder.", embedded() ? "bad" : "ok");
+});
+el("btn-json").addEventListener("click", function(){ download("json"); });
+el("btn-eml").addEventListener("click", function(){
+  download("eml");
+  setDoneNote("Email draft saved — double-click it, add the address, send.", "ok");
+});
+el("btn-new").addEventListener("click", resetToSetup);
+el("btn-archive-csv").addEventListener("click", downloadArchive);
+el("btn-done-archive-csv").addEventListener("click", downloadArchive);
+el("btn-archive").addEventListener("click", function(){
+  var all = JSON.parse(localStorage.getItem("ga_archive_v1") || "[]");
+  var blob = new Blob([JSON.stringify(all, null, 2)], { type: "application/json" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "gesture_archive_" + Date.now() + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+});
+
+document.querySelector(".ctl").addEventListener("click", function(e){
+  var b = e.target.closest("button");
+  if (!b) return;
+  if (b.dataset.act === "pause") togglePause();
+  if (b.dataset.act === "skip") skipTrial();
+  if (b.dataset.act === "redo") redoTrial();
+  if (b.dataset.act === "end"){
+    if (confirm("End the session now? Remaining trials will be marked as not reached.")) finishSession();
+  }
+});
+
+document.addEventListener("keydown", function(e){
+  if (!S.running) {
+    if (e.key === "Enter" && el("setup").classList.contains("on") && e.target.tagName === "INPUT") startSession();
+    return;
+  }
+  if (e.code === "Space"){ e.preventDefault(); togglePause(); }
+  else if (e.key === "ArrowRight"){ e.preventDefault(); skipTrial(); }
+  else if (e.key === "ArrowLeft"){ e.preventDefault(); redoTrial(); }
+  else if (e.key === "f" || e.key === "F"){ requestFullscreen(); }
+});
+
+document.addEventListener("visibilitychange", function(){
+  if (!document.hidden && S.running){
+    keepAwake();
+    if (!S.paused) update();
+  }
+});
+
+/* Silent opt-in: open the file as index.html?post=<url> once and every finished
+   session is also POSTed there. No UI, because a subject-facing screen should not
+   carry an endpoint field. The URL is remembered after the first use. */
+try {
+  var m = /[?&]post=([^&]+)/.exec(location.search);
+  if (m){
+    var ep = decodeURIComponent(m[1]);
+    localStorage.setItem("ga_endpoint", ep);
+    S.endpoint = ep;
+  } else {
+    S.endpoint = localStorage.getItem("ga_endpoint") || "";
+  }
+} catch(e){}
+el("f-subject").addEventListener("input", function(){ this.style.borderColor = ""; });
+if (embedded()){
+  var tw = el("toast");
+  tw.hidden = false;
+  tw.innerHTML = "<b>Preview panel:</b> this frame blocks file downloads, so the CSV never " +
+    "lands anywhere. Open <b>index.html</b> in Chrome to save the files.";
+}
+refreshArchive();
+refreshBudget();
+el("f-subject").focus();
+
+})();
+</script>
+</body>
+</html>
