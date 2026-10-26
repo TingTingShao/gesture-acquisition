@@ -6,3 +6,6 @@ gesture_all_*.csv
 
 # OS noise
 .DS_Store
+
+# Local test harness output
+.shots/

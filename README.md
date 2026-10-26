@@ -115,10 +115,10 @@ without a researcher explaining it:
 | Answering the phone | phone rises to the ear, holds, returns |
 | Combing hair | comb strokes down through the hair twice |
 | Cutting | scissors open and close four times, the sheet feeds through |
-| Triangle | the outline is drawn continuously: left side, top, right side |
+| Triangle | stroke by stroke: the left slant, the right slant, then the base |
 | Circle | one stroke from the top, clockwise, returning to the start |
-| Square | four sides in order, one stroke each |
-| Star | the five strokes of a pentagram, in the order a person draws them |
+| Square | four strokes: left side down, across the bottom, right side up, across the top |
+| Star | five strokes: the bar across first, the two slants down from the top, then the two that close it |
 
 The resting position has its own calm loop (hand flat on the table, slow breathing rings), and
 during the three-second get-ready cue the card switches to the next gesture, tinted amber.

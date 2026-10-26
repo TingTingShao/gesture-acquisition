@@ -147,21 +147,47 @@ details.props ul{margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.
 
 .paper{fill:#FFFFFF;stroke:rgba(27,27,25,.16);stroke-width:1.5}
 .ink{fill:none;stroke:var(--teal);stroke-width:3.4;stroke-linejoin:round;stroke-linecap:round;
-  stroke-dasharray:100;stroke-dashoffset:100}
+  stroke-dasharray:100}
 .pen{fill:none;stroke:var(--teal);stroke-width:7.5;stroke-linecap:round;
-  stroke-dasharray:0.1 99.9;stroke-dashoffset:100;opacity:.85}
+  stroke-dasharray:0.1 99.9;opacity:.85}
 
-@keyframes drawShape{
-  0%{stroke-dashoffset:100}
-  58%{stroke-dashoffset:0}
-  96%{stroke-dashoffset:0}
-  100%{stroke-dashoffset:100}
-}
-.ink,.pen{animation:drawShape 4.4s linear infinite}
-.scene[data-g="circ"] .ink,.scene[data-g="circ"] .pen{animation-duration:3.4s}
-.scene[data-g="tri"] .ink,.scene[data-g="tri"] .pen{animation-duration:4.2s}
-.scene[data-g="sq"] .ink,.scene[data-g="sq"] .pen{animation-duration:4.2s}
-.scene[data-g="star"] .ink,.scene[data-g="star"] .pen{animation-duration:5.2s}
+/* One group per stroke. stroke-dashoffset is inherited, so animating it on the
+   group drives both the line and its pen dot, and the strokes stay in step. */
+.scene .s1,.scene .s2,.scene .s3,.scene .s4,.scene .s5{stroke-dashoffset:100}
+.scene[data-g="tri"] .s1{animation:tr1 4.2s linear infinite}
+.scene[data-g="tri"] .s2{animation:tr2 4.2s linear infinite}
+.scene[data-g="tri"] .s3{animation:tr3 4.2s linear infinite}
+.scene[data-g="sq"] .s1{animation:q1 4.6s linear infinite}
+.scene[data-g="sq"] .s2{animation:q2 4.6s linear infinite}
+.scene[data-g="sq"] .s3{animation:q3 4.6s linear infinite}
+.scene[data-g="sq"] .s4{animation:q4 4.6s linear infinite}
+.scene[data-g="star"] .s1{animation:st1 5.6s linear infinite}
+.scene[data-g="star"] .s2{animation:st2 5.6s linear infinite}
+.scene[data-g="star"] .s3{animation:st3 5.6s linear infinite}
+.scene[data-g="star"] .s4{animation:st4 5.6s linear infinite}
+.scene[data-g="star"] .s5{animation:st5 5.6s linear infinite}
+.scene[data-g="circ"] .s1{animation:ci1 3.2s linear infinite}
+
+/* Each stroke's group is hidden until its own turn comes, otherwise the idle pen
+   dot (dashoffset 100 puts the 0.1 dash back at the path start) sits on the paper
+   looking like a stray mark. Opacity rides along in the same keyframes. */
+/* triangle: left slant, right slant, base */
+@keyframes tr1{0%{stroke-dashoffset:100;opacity:0}1%{opacity:1}24%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes tr2{0%,24%{stroke-dashoffset:100;opacity:0}25%{opacity:1}48%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes tr3{0%,48%{stroke-dashoffset:100;opacity:0}49%{opacity:1}72%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+/* square: down, across, up, across */
+@keyframes q1{0%{stroke-dashoffset:100;opacity:0}1%{opacity:1}18%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes q2{0%,18%{stroke-dashoffset:100;opacity:0}19%{opacity:1}36%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes q3{0%,36%{stroke-dashoffset:100;opacity:0}37%{opacity:1}54%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes q4{0%,54%{stroke-dashoffset:100;opacity:0}55%{opacity:1}72%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+/* star: bar, left leg, right leg, then the two strokes that close it */
+@keyframes st1{0%{stroke-dashoffset:100;opacity:0}1%{opacity:1}14.4%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes st2{0%,14.4%{stroke-dashoffset:100;opacity:0}15.2%{opacity:1}28.8%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes st3{0%,28.8%{stroke-dashoffset:100;opacity:0}29.6%{opacity:1}43.2%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes st4{0%,43.2%{stroke-dashoffset:100;opacity:0}44%{opacity:1}57.6%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes st5{0%,57.6%{stroke-dashoffset:100;opacity:0}58.4%{opacity:1}72%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+/* circle: one continuous stroke */
+@keyframes ci1{0%{stroke-dashoffset:100;opacity:0}1%{opacity:1}72%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
 
 @keyframes drinkMove{0%,10%{transform:translate(0,0) rotate(0deg)}
   30%,54%{transform:translate(125px,-57px) rotate(60deg)}72%,100%{transform:translate(0,0) rotate(0deg)}}
@@ -277,6 +303,8 @@ tr:last-child td{border-bottom:0}
   font-weight:500;text-decoration:underline;text-underline-offset:2px}
 
 .send-note{margin:10px 0 0;font-size:12px;line-height:1.75;color:var(--ink3)}
+.subj-err{margin:9px 0 0;font-size:12px;line-height:1.6;color:#B4443D}
+.subj-err[hidden]{display:none}
 
 .toast{position:fixed;left:16px;bottom:16px;z-index:60;max-width:390px;
   background:#FBF1DE;border:1px solid #E4CFA6;color:#7A4E08;border-radius:11px;
@@ -316,7 +344,7 @@ tr:last-child td{border-bottom:0}
 
     <div class="grid">
       <label class="field"><span>Subject ID</span>
-        <input id="f-subject" type="text" placeholder="S01" autocomplete="off" spellcheck="false">
+        <input id="f-subject" type="text" placeholder="e.g. S01" autocomplete="off" spellcheck="false">
       </label>
       <label class="field"><span>Session number</span>
         <input id="f-session" type="number" value="1" min="1" step="1">
@@ -328,6 +356,7 @@ tr:last-child td{border-bottom:0}
         </div>
       </div>
     </div>
+    <p class="subj-err" id="subj-err" hidden>Add a subject ID before starting — it is the first column of every row.</p>
 
     <p class="send-note">Nothing is emailed from this page — the CSV downloads when the session
       ends, and the closing screen can also write an email draft with it attached.</p>
@@ -536,26 +565,70 @@ tr:last-child td{border-bottom:0}
 
         <div class="scene" data-g="tri"><svg viewBox="0 0 300 240">
           <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
-          <path class="ink" pathLength="100" d="M150,62 L86,188 L214,188 Z"/>
-          <path class="pen" pathLength="100" d="M150,62 L86,188 L214,188 Z"/>
+          <g class="s1">
+            <path class="ink" pathLength="100" d="M150,62 L86,188"/>
+            <path class="pen" pathLength="100" d="M150,62 L86,188"/>
+          </g>
+          <g class="s2">
+            <path class="ink" pathLength="100" d="M150,62 L214,188"/>
+            <path class="pen" pathLength="100" d="M150,62 L214,188"/>
+          </g>
+          <g class="s3">
+            <path class="ink" pathLength="100" d="M86,188 L214,188"/>
+            <path class="pen" pathLength="100" d="M86,188 L214,188"/>
+          </g>
         </svg></div>
 
         <div class="scene" data-g="circ"><svg viewBox="0 0 300 240">
           <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
-          <path class="ink" pathLength="100" d="M150,55 A70,70 0 1,1 150,195 A70,70 0 1,1 150,55"/>
-          <path class="pen" pathLength="100" d="M150,55 A70,70 0 1,1 150,195 A70,70 0 1,1 150,55"/>
+          <g class="s1">
+            <path class="ink" pathLength="100" d="M150,55 A70,70 0 1,1 150,195 A70,70 0 1,1 150,55"/>
+            <path class="pen" pathLength="100" d="M150,55 A70,70 0 1,1 150,195 A70,70 0 1,1 150,55"/>
+          </g>
         </svg></div>
 
         <div class="scene" data-g="sq"><svg viewBox="0 0 300 240">
           <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
-          <path class="ink" pathLength="100" d="M84,62 H216 V188 H84 Z"/>
-          <path class="pen" pathLength="100" d="M84,62 H216 V188 H84 Z"/>
+          <g class="s1">
+            <path class="ink" pathLength="100" d="M84,62 L84,188"/>
+            <path class="pen" pathLength="100" d="M84,62 L84,188"/>
+          </g>
+          <g class="s2">
+            <path class="ink" pathLength="100" d="M84,188 L216,188"/>
+            <path class="pen" pathLength="100" d="M84,188 L216,188"/>
+          </g>
+          <g class="s3">
+            <path class="ink" pathLength="100" d="M216,188 L216,62"/>
+            <path class="pen" pathLength="100" d="M216,188 L216,62"/>
+          </g>
+          <g class="s4">
+            <path class="ink" pathLength="100" d="M216,62 L84,62"/>
+            <path class="pen" pathLength="100" d="M216,62 L84,62"/>
+          </g>
         </svg></div>
 
         <div class="scene" data-g="star"><svg viewBox="0 0 300 240">
           <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
-          <path class="ink" pathLength="100" d="M150,36 L201.7,195.2 L66.3,96.8 L233.7,96.8 L98.3,195.2 Z"/>
-          <path class="pen" pathLength="100" d="M150,36 L201.7,195.2 L66.3,96.8 L233.7,96.8 L98.3,195.2 Z"/>
+          <g class="s1">
+            <path class="ink" pathLength="100" d="M66.3,96.8 L233.7,96.8"/>
+            <path class="pen" pathLength="100" d="M66.3,96.8 L233.7,96.8"/>
+          </g>
+          <g class="s2">
+            <path class="ink" pathLength="100" d="M150,36 L98.3,195.2"/>
+            <path class="pen" pathLength="100" d="M150,36 L98.3,195.2"/>
+          </g>
+          <g class="s3">
+            <path class="ink" pathLength="100" d="M150,36 L201.7,195.2"/>
+            <path class="pen" pathLength="100" d="M150,36 L201.7,195.2"/>
+          </g>
+          <g class="s4">
+            <path class="ink" pathLength="100" d="M201.7,195.2 L66.3,96.8"/>
+            <path class="pen" pathLength="100" d="M201.7,195.2 L66.3,96.8"/>
+          </g>
+          <g class="s5">
+            <path class="ink" pathLength="100" d="M233.7,96.8 L98.3,195.2"/>
+            <path class="pen" pathLength="100" d="M233.7,96.8 L98.3,195.2"/>
+          </g>
         </svg></div>
       </div>
     </div>
@@ -637,13 +710,13 @@ var DAILY = [
 
 var SHAPES = [
   {id:"tri",  name:"Triangle", prop:"Paper and pen",
-   instr:"Draw a triangle on the paper — up the left side, across the top, down the right side. Keep drawing triangles until the window ends."},
+   instr:"Draw a triangle in three strokes: down the left slant, down the right slant, then the base across. Keep drawing triangles until the window ends."},
   {id:"circ", name:"Circle",   prop:"Paper and pen",
    instr:"Draw a circle in one continuous stroke, starting at the top and going clockwise. Keep drawing circles until the window ends."},
   {id:"sq",   name:"Square",   prop:"Paper and pen",
-   instr:"Draw a square one side at a time, four straight strokes. Keep drawing squares until the window ends."},
+   instr:"Draw a square in four strokes: down the left side, across the bottom, up the right side, across the top. Keep drawing squares until the window ends."},
   {id:"star", name:"Star",     prop:"Paper and pen",
-   instr:"Draw a five-pointed star in five straight strokes without lifting the pen. Keep drawing stars until the window ends."}
+   instr:"Draw a five-pointed star in five strokes: the bar across first, then the two slants down from the top, then the two strokes that close it. Keep drawing stars until the window ends."}
 ];
 
 var SETS = {
@@ -734,10 +807,15 @@ function buildDailyOrder(n){
 
 function buildShapeOrder(n){
   var ids = SHAPES.map(function(g){ return g.id; });
+  // seed every shape at least twice, then fill the rest, so the "each appears at
+  // least twice" promise on the setup screen is actually true for a 10-trial run
+  var base = n >= ids.length * 2 ? 2 : 1;
   var items = null;
   for (var attempt = 0; attempt < 4000; attempt++){
-    items = ids.slice();
+    items = [];
+    ids.forEach(function(id){ for (var b = 0; b < base; b++) items.push(id); });
     while (items.length < n) items.push(ids[Math.floor(Math.random() * ids.length)]);
+    items = items.slice(0, n);
     shuffle(items);
     if (validShapeOrder(items)) return items;
   }
@@ -894,7 +972,13 @@ function applySet(){
 
 function startSession(){
   var subj = el("f-subject").value.trim();
-  if (!subj){ el("f-subject").focus(); el("f-subject").style.borderColor = "#B4443D"; return; }
+  if (!subj){
+    el("f-subject").focus();
+    el("f-subject").style.borderColor = "#B4443D";
+    el("subj-err").hidden = false;
+    return;
+  }
+  el("subj-err").hidden = true;
   var d = setDef();
   var c = d.perform ? { ok: true, p: d.perform } : protoCheck();
   if (!c.ok){ refreshBudget(); return; }
@@ -1506,7 +1590,10 @@ try {
   if (savedSet && SETS[savedSet]){ CUR = savedSet; el("f-set").value = savedSet; }
 } catch(e){}
 
-el("f-subject").addEventListener("input", function(){ this.style.borderColor = ""; });
+el("f-subject").addEventListener("input", function(){
+  this.style.borderColor = "";
+  el("subj-err").hidden = true;
+});
 if (embedded()){
   var tw = el("toast");
   tw.hidden = false;
