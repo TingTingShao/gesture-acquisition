@@ -160,7 +160,6 @@ details.props ul{margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.
 .scene[data-g="sq"] .s1{animation:q1 4.6s linear infinite}
 .scene[data-g="sq"] .s2{animation:q2 4.6s linear infinite}
 .scene[data-g="sq"] .s3{animation:q3 4.6s linear infinite}
-.scene[data-g="sq"] .s4{animation:q4 4.6s linear infinite}
 .scene[data-g="star"] .s1{animation:st1 5.6s linear infinite}
 .scene[data-g="star"] .s2{animation:st2 5.6s linear infinite}
 .scene[data-g="star"] .s3{animation:st3 5.6s linear infinite}
@@ -175,11 +174,12 @@ details.props ul{margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.
 @keyframes tr1{0%{stroke-dashoffset:100;opacity:0}1%{opacity:1}24%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
 @keyframes tr2{0%,24%{stroke-dashoffset:100;opacity:0}25%{opacity:1}48%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
 @keyframes tr3{0%,48%{stroke-dashoffset:100;opacity:0}49%{opacity:1}72%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
-/* square: down, across, up, across */
+/* square: the three strokes of 口 — down the left, across the top and down the
+   right in one stroke, then across the bottom. Timing is weighted by length so
+   the pen keeps a constant speed: 1 : 2 : 1 of the drawing window. */
 @keyframes q1{0%{stroke-dashoffset:100;opacity:0}1%{opacity:1}18%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
-@keyframes q2{0%,18%{stroke-dashoffset:100;opacity:0}19%{opacity:1}36%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
-@keyframes q3{0%,36%{stroke-dashoffset:100;opacity:0}37%{opacity:1}54%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
-@keyframes q4{0%,54%{stroke-dashoffset:100;opacity:0}55%{opacity:1}72%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes q2{0%,18%{stroke-dashoffset:100;opacity:0}19%{opacity:1}54%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
+@keyframes q3{0%,54%{stroke-dashoffset:100;opacity:0}55%{opacity:1}72%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
 /* star: bar, left leg, right leg, then the two strokes that close it */
 @keyframes st1{0%{stroke-dashoffset:100;opacity:0}1%{opacity:1}14.4%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
 @keyframes st2{0%,14.4%{stroke-dashoffset:100;opacity:0}15.2%{opacity:1}28.8%{stroke-dashoffset:0}96%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:100;opacity:0}}
@@ -594,16 +594,12 @@ tr:last-child td{border-bottom:0}
             <path class="pen" pathLength="100" d="M84,62 L84,188"/>
           </g>
           <g class="s2">
-            <path class="ink" pathLength="100" d="M84,188 L216,188"/>
-            <path class="pen" pathLength="100" d="M84,188 L216,188"/>
+            <path class="ink" pathLength="100" d="M84,62 L216,62 L216,188"/>
+            <path class="pen" pathLength="100" d="M84,62 L216,62 L216,188"/>
           </g>
           <g class="s3">
-            <path class="ink" pathLength="100" d="M216,188 L216,62"/>
-            <path class="pen" pathLength="100" d="M216,188 L216,62"/>
-          </g>
-          <g class="s4">
-            <path class="ink" pathLength="100" d="M216,62 L84,62"/>
-            <path class="pen" pathLength="100" d="M216,62 L84,62"/>
+            <path class="ink" pathLength="100" d="M84,188 L216,188"/>
+            <path class="pen" pathLength="100" d="M84,188 L216,188"/>
           </g>
         </svg></div>
 
@@ -714,7 +710,7 @@ var SHAPES = [
   {id:"circ", name:"Circle",   prop:"Paper and pen",
    instr:"Draw a circle in one continuous stroke, starting at the top and going clockwise. Keep drawing circles until the window ends."},
   {id:"sq",   name:"Square",   prop:"Paper and pen",
-   instr:"Draw a square in four strokes: down the left side, across the bottom, up the right side, across the top. Keep drawing squares until the window ends."},
+   instr:"Draw a square in three strokes: down the left side, then across the top and down the right side in one stroke, then across the bottom. Keep drawing squares until the window ends."},
   {id:"star", name:"Star",     prop:"Paper and pen",
    instr:"Draw a five-pointed star in five strokes: the bar across first, then the two slants down from the top, then the two strokes that close it. Keep drawing stars until the window ends."}
 ];
