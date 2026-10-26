@@ -1,7 +1,14 @@
 # Gesture acquisition · Science Day
 
-A single-file web app that runs the 10-minute gesture protocol and writes a timestamped
-label log, so the sensor recording can be cut by label without any manual annotation.
+A single-file web app that runs a 10-minute gesture protocol and writes a timestamped label
+log, so the sensor recording can be cut by label without any manual annotation.
+
+Two gesture sets ship with it, chosen from a dropdown on the setup screen:
+
+| set | gestures | trials | per trial |
+|---|---|---|---|
+| **Daily activities** | drinking, eating, opening a bottle, pouring, typing, answering the phone, combing, cutting | 9–15, drawn at random | 30 s perform, rest derived |
+| **Drawing shapes** | triangle, circle, square, five-pointed star | 10, fixed | 30 s drawing, 30 s rest |
 
 ## Open it
 
@@ -31,13 +38,19 @@ download silently. The page detects that case and says so, but the files never a
 For the day itself:
 
 1. Open the file, press `F` for fullscreen.
-2. Enter the subject ID, session number and dominant hand.
+2. Pick the gesture set, then enter the subject ID, session number and dominant hand.
 3. Start. The subject reads the screen; you only touch the controls if something goes wrong.
+
+The set is remembered, so the second session of the day starts on the same one.
 
 Keep the tab in the foreground. The browser is put to sleep after a while in the background,
 and the session clock jumps forward when it wakes up.
 
 ## Protocol implemented
+
+Both sets fill exactly 600 s and end on 10:00. They differ in how the schedule is derived.
+
+### Daily activities
 
 | | |
 |---|---|
@@ -56,6 +69,23 @@ rest = (600 s − n × perform) / n
 
 which gives 10 s of rest at 15 trials, 16 s at 13, and 37 s at 9. Every session ends at 10:00
 with no idle tail, whatever the draw.
+
+### Drawing shapes
+
+| | |
+|---|---|
+| Total | 600 s fixed, always ends at 10:00 |
+| Trials | 10, fixed |
+| Per trial | 30 s drawing, 30 s rest |
+| Order | random: all 4 shapes at least twice, no shape twice in a row, none more than 3 times |
+
+30 s + 30 s × 10 trials is exactly 600 s, so nothing is derived here — the draw is fixed and
+the schedule falls out of it. Ten slots over four shapes means two shapes appear three times
+and two appear twice; the constraints keep that spread random rather than balanced by hand.
+
+The subject keeps drawing the same shape for the whole 30 s window, so the window stays
+class-pure and any cut inside it inherits the label. A shape takes 1–3 s, so a window holds
+10–20 repetitions.
 
 ### The 30 s is a repetition window, not one slow execution
 
@@ -85,6 +115,10 @@ without a researcher explaining it:
 | Answering the phone | phone rises to the ear, holds, returns |
 | Combing hair | comb strokes down through the hair twice |
 | Cutting | scissors open and close four times, the sheet feeds through |
+| Triangle | the outline is drawn continuously: left side, top, right side |
+| Circle | one stroke from the top, clockwise, returning to the start |
+| Square | four sides in order, one stroke each |
+| Star | the five strokes of a pentagram, in the order a person draws them |
 
 The resting position has its own calm loop (hand flat on the table, slow breathing rings), and
 during the three-second get-ready cue the card switches to the next gesture, tinted amber.
@@ -107,6 +141,7 @@ without it, so a subject who ignores the picture still knows what to do.
 | `duration_s` | wall-clock duration of the window |
 | `status` | `completed` / `skipped` / `aborted` / `not_reached` |
 | `detected_lag_ms` | how late the UI noticed the boundary, normally 7–12 ms |
+| `gesture_set` | `daily` or `shapes` — which set the session ran |
 
 `gesture_<subject>_s<n>_<date>.json` — the same trials plus every state change
 (`SESSION_START`, `TRIAL_START`, `TRIAL_END`, `PAUSE`, `RESUME`, `SKIP`, `REDO`,

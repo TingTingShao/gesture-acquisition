@@ -58,6 +58,7 @@ input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,110,86,.12)}
 
 .proto{margin-top:18px;border:1px solid var(--line);border-radius:12px;padding:15px 16px;background:#FCFCFA}
 .proto-row{display:flex;align-items:center;gap:10px}
+.proto-row[hidden]{display:none}
 .proto-row label{font-size:12px;font-weight:500;color:var(--ink2)}
 .proto-row input{width:78px;height:38px;padding:0 10px;border:1px solid var(--line2);
   border-radius:9px;background:#fff;font-size:14px;color:var(--ink);outline:none;font-variant-numeric:tabular-nums}
@@ -134,6 +135,33 @@ details.props ul{margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.
 .art .scene{display:none}
 .art .scene.active{display:block}
 .table{fill:#E7E1D5}
+
+.setrow{display:flex;align-items:center;gap:12px;margin:20px 0 0}
+.setrow > label{font-size:12px;font-weight:500;color:var(--ink2);white-space:nowrap}
+.setrow select{flex:1;height:44px;padding:0 38px 0 13px;border:1px solid var(--line2);
+  border-radius:10px;background:#FCFCFA;font-size:14px;color:var(--ink);outline:none;
+  appearance:none;-webkit-appearance:none;cursor:pointer;
+  background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1.4l5 5 5-5' fill='none' stroke='%235F5E58' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 14px center}
+.setrow select:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(15,110,86,.12)}
+
+.paper{fill:#FFFFFF;stroke:rgba(27,27,25,.16);stroke-width:1.5}
+.ink{fill:none;stroke:var(--teal);stroke-width:3.4;stroke-linejoin:round;stroke-linecap:round;
+  stroke-dasharray:100;stroke-dashoffset:100}
+.pen{fill:none;stroke:var(--teal);stroke-width:7.5;stroke-linecap:round;
+  stroke-dasharray:0.1 99.9;stroke-dashoffset:100;opacity:.85}
+
+@keyframes drawShape{
+  0%{stroke-dashoffset:100}
+  58%{stroke-dashoffset:0}
+  96%{stroke-dashoffset:0}
+  100%{stroke-dashoffset:100}
+}
+.ink,.pen{animation:drawShape 4.4s linear infinite}
+.scene[data-g="circ"] .ink,.scene[data-g="circ"] .pen{animation-duration:3.4s}
+.scene[data-g="tri"] .ink,.scene[data-g="tri"] .pen{animation-duration:4.2s}
+.scene[data-g="sq"] .ink,.scene[data-g="sq"] .pen{animation-duration:4.2s}
+.scene[data-g="star"] .ink,.scene[data-g="star"] .pen{animation-duration:5.2s}
 
 @keyframes drinkMove{0%,10%{transform:translate(0,0) rotate(0deg)}
   30%,54%{transform:translate(125px,-57px) rotate(60deg)}72%,100%{transform:translate(0,0) rotate(0deg)}}
@@ -259,6 +287,11 @@ tr:last-child td{border-bottom:0}
 @media(max-height:820px){
   .tblwrap{max-height:clamp(140px,24vh,260px)}
   .stats{margin:16px 0 18px}
+  .setrow{margin-top:14px}
+  .grid{margin:15px 0 2px}
+  .proto{margin-top:13px}
+  .toggle{margin-top:12px}
+  .start{height:50px;margin-top:14px}
 }
 </style>
 </head>
@@ -271,8 +304,15 @@ tr:last-child td{border-bottom:0}
   <div class="card">
     <div class="eyebrow">Science Day · data collection</div>
     <h1>Gesture acquisition</h1>
-    <p class="lede">A fixed ten-minute session. The order is randomised: all eight gestures appear
-      at least once, drinking appears twice, and no gesture repeats back to back.</p>
+    <p class="lede" id="lede"></p>
+
+    <div class="setrow">
+      <label for="f-set">Gesture set</label>
+      <select id="f-set">
+        <option value="daily">Daily activities — 8 gestures</option>
+        <option value="shapes">Drawing shapes — 4 shapes</option>
+      </select>
+    </div>
 
     <div class="grid">
       <label class="field"><span>Subject ID</span>
@@ -289,12 +329,11 @@ tr:last-child td{border-bottom:0}
       </div>
     </div>
 
-    <p class="send-note">Nothing is emailed from this page. The records download to your Downloads
-      folder when the session ends, and the closing screen can also write a ready-made email draft
-      with the CSV attached.</p>
+    <p class="send-note">Nothing is emailed from this page — the CSV downloads when the session
+      ends, and the closing screen can also write an email draft with it attached.</p>
 
     <div class="proto">
-      <div class="proto-row">
+      <div class="proto-row" id="perform-row">
         <label for="f-perform">Perform window</label>
         <input id="f-perform" type="number" value="30" min="10" max="35" step="1">
         <span class="unit">sec per trial</span>
@@ -309,16 +348,7 @@ tr:last-child td{border-bottom:0}
 
     <details class="props">
       <summary>Props to prepare before the first subject</summary>
-      <ul>
-        <li>Glass of water, plus a jug to refill it</li>
-        <li>Small bowl of almonds</li>
-        <li>Bottle with a screw cap (opened, for pouring)</li>
-        <li>Computer keyboard within reach</li>
-        <li>Phone (any handset)</li>
-        <li>Comb</li>
-        <li>Scissors and a few sheets of paper</li>
-        <li>Table and chair: the subject sits comfortably, forearms supported</li>
-      </ul>
+      <ul id="props-list"></ul>
     </details>
 
     <button class="start" id="btn-start">Start session</button>
@@ -503,6 +533,30 @@ tr:last-child td{border-bottom:0}
             <use href="#hf" x="52" y="0"/>
           </g>
         </svg></div>
+
+        <div class="scene" data-g="tri"><svg viewBox="0 0 300 240">
+          <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
+          <path class="ink" pathLength="100" d="M150,62 L86,188 L214,188 Z"/>
+          <path class="pen" pathLength="100" d="M150,62 L86,188 L214,188 Z"/>
+        </svg></div>
+
+        <div class="scene" data-g="circ"><svg viewBox="0 0 300 240">
+          <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
+          <path class="ink" pathLength="100" d="M150,55 A70,70 0 1,1 150,195 A70,70 0 1,1 150,55"/>
+          <path class="pen" pathLength="100" d="M150,55 A70,70 0 1,1 150,195 A70,70 0 1,1 150,55"/>
+        </svg></div>
+
+        <div class="scene" data-g="sq"><svg viewBox="0 0 300 240">
+          <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
+          <path class="ink" pathLength="100" d="M84,62 H216 V188 H84 Z"/>
+          <path class="pen" pathLength="100" d="M84,62 H216 V188 H84 Z"/>
+        </svg></div>
+
+        <div class="scene" data-g="star"><svg viewBox="0 0 300 240">
+          <rect class="paper" x="50" y="28" width="200" height="180" rx="8"/>
+          <path class="ink" pathLength="100" d="M150,36 L201.7,195.2 L66.3,96.8 L233.7,96.8 L98.3,195.2 Z"/>
+          <path class="pen" pathLength="100" d="M150,36 L201.7,195.2 L66.3,96.8 L233.7,96.8 L98.3,195.2 Z"/>
+        </svg></div>
       </div>
     </div>
     <div class="meter">
@@ -562,7 +616,7 @@ function applyProtocol(n, perfS){
 }
 function scheduleEnd(){ return LEAD + N * CYCLE - REST; }
 
-var G = [
+var DAILY = [
   {id:"drink", name:"Drinking",          prop:"Glass of water",
    instr:"Take the glass with your dominant hand, drink some water, then put the glass back on the table."},
   {id:"eat",   name:"Eating",            prop:"One almond",
@@ -580,6 +634,55 @@ var G = [
   {id:"cut",   name:"Cutting",           prop:"Scissors and paper",
    instr:"Hold the scissors in your dominant hand, take a sheet of paper, make three or four cuts, then put both back on the table."}
 ];
+
+var SHAPES = [
+  {id:"tri",  name:"Triangle", prop:"Paper and pen",
+   instr:"Draw a triangle on the paper — up the left side, across the top, down the right side. Keep drawing triangles until the window ends."},
+  {id:"circ", name:"Circle",   prop:"Paper and pen",
+   instr:"Draw a circle in one continuous stroke, starting at the top and going clockwise. Keep drawing circles until the window ends."},
+  {id:"sq",   name:"Square",   prop:"Paper and pen",
+   instr:"Draw a square one side at a time, four straight strokes. Keep drawing squares until the window ends."},
+  {id:"star", name:"Star",     prop:"Paper and pen",
+   instr:"Draw a five-pointed star in five straight strokes without lifting the pen. Keep drawing stars until the window ends."}
+];
+
+var SETS = {
+  daily: {
+    id: "daily",
+    label: "Daily activities",
+    gestures: DAILY,
+    lede: "A fixed ten-minute session. The order is randomised: all eight gestures appear at " +
+      "least once, drinking appears twice, and no gesture repeats back to back.",
+    props: ["Glass of water, plus a jug to refill it",
+      "Small bowl of almonds",
+      "Bottle with a screw cap (opened, for pouring)",
+      "Computer keyboard within reach",
+      "Phone (any handset)",
+      "Comb",
+      "Scissors and a few sheets of paper",
+      "Table and chair: the subject sits comfortably, forearms supported"],
+    trials: function(){ return 9 + Math.floor(Math.random() * 7); },
+    perform: 0
+  },
+  shapes: {
+    id: "shapes",
+    label: "Drawing shapes",
+    gestures: SHAPES,
+    lede: "A fixed ten-minute session: ten trials of 30 s drawing and 30 s rest. The four " +
+      "shapes are shuffled, each appears at least twice, and no shape repeats back to back.",
+    props: ["A4 paper — a fresh sheet per subject, or a small stack",
+      "A pen or pencil, held the way the subject normally writes",
+      "A hard surface to draw on, and a chair square to it",
+      "Table: forearms supported, paper in front of the dominant hand"],
+    trials: function(){ return 10; },
+    perform: 30
+  }
+};
+
+var CUR = "daily";
+function setDef(){ return SETS[CUR]; }
+
+var G = DAILY.concat(SHAPES);
 var BY_ID = {};
 G.forEach(function(g){ BY_ID[g.id] = g; });
 
@@ -612,7 +715,11 @@ function shuffle(a){
 }
 
 function buildOrder(n){
-  var ids = G.map(function(g){ return g.id; });
+  return CUR === "shapes" ? buildShapeOrder(n) : buildDailyOrder(n);
+}
+
+function buildDailyOrder(n){
+  var ids = DAILY.map(function(g){ return g.id; });
   var pool = ids.filter(function(id){ return id !== "drink"; });
   var items = null;
   for (var attempt = 0; attempt < 4000; attempt++){
@@ -623,6 +730,28 @@ function buildOrder(n){
     if (validOrder(items)) return items;
   }
   return items;
+}
+
+function buildShapeOrder(n){
+  var ids = SHAPES.map(function(g){ return g.id; });
+  var items = null;
+  for (var attempt = 0; attempt < 4000; attempt++){
+    items = ids.slice();
+    while (items.length < n) items.push(ids[Math.floor(Math.random() * ids.length)]);
+    shuffle(items);
+    if (validShapeOrder(items)) return items;
+  }
+  return items;
+}
+
+function validShapeOrder(a){
+  for (var i = 1; i < a.length; i++) if (a[i] === a[i-1]) return false;
+  for (var m = 0; m < a.length; m++){
+    var c = 0;
+    for (var k = 0; k < a.length; k++) if (a[k] === a[m]) c++;
+    if (c > 3) return false;
+  }
+  return true;
 }
 function validOrder(a){
   for (var i = 1; i < a.length; i++) if (a[i] === a[i-1]) return false;
@@ -723,8 +852,20 @@ function protoCheck(){
 }
 
 function refreshBudget(){
-  var c = protoCheck();
+  var d = setDef();
   var b = el("budget");
+
+  if (d.perform){
+    var n = d.trials();
+    var rest = Math.floor((TOTAL / 1000 - n * d.perform) / n);
+    b.className = "budget";
+    b.innerHTML = "<b>" + n + "</b> trials, fixed · <b>" + d.perform + " s</b> drawing and <b>" +
+      rest + " s</b> rest, so every session is exactly " + mmss(TOTAL) + ".";
+    el("btn-start").disabled = false;
+    return { ok: true, p: d.perform };
+  }
+
+  var c = protoCheck();
   if (!c.ok){
     b.className = "budget bad";
     b.textContent = c.err;
@@ -737,12 +878,27 @@ function refreshBudget(){
   return c;
 }
 
+function applySet(){
+  var d = setDef();
+  el("lede").textContent = d.lede;
+  var ul = el("props-list");
+  ul.innerHTML = "";
+  d.props.forEach(function(t){
+    var li = document.createElement("li");
+    li.textContent = t;
+    ul.appendChild(li);
+  });
+  el("perform-row").hidden = !!d.perform;
+  refreshBudget();
+}
+
 function startSession(){
   var subj = el("f-subject").value.trim();
   if (!subj){ el("f-subject").focus(); el("f-subject").style.borderColor = "#B4443D"; return; }
-  var c = protoCheck();
+  var d = setDef();
+  var c = d.perform ? { ok: true, p: d.perform } : protoCheck();
   if (!c.ok){ refreshBudget(); return; }
-  applyProtocol(9 + Math.floor(Math.random() * 7), c.p);
+  applyProtocol(d.trials(), c.p);
 
   S.subject = subj;
   S.sessionNo = Math.max(1, parseInt(el("f-session").value, 10) || 1);
@@ -985,8 +1141,15 @@ function showDone(){
     box.appendChild(d);
   }
   var doneN = S.trials.filter(function(t){ return t.status === "completed"; }).length;
-  stat(covered + "/8", "gestures covered", covered === 8);
-  stat(drinkN, "drinking trials", drinkN >= 2);
+  var want = setDef().gestures.length;
+  stat(covered + "/" + want, "gestures covered", covered === want);
+  if (CUR === "shapes"){
+    var least = 99;
+    setDef().gestures.forEach(function(g){ least = Math.min(least, counts[g.name] || 0); });
+    stat(least + "×", "least-drawn shape", least >= 2);
+  } else {
+    stat(drinkN, "drinking trials", drinkN >= 2);
+  }
   stat(doneN + "/" + N, "trials completed", doneN === N);
   stat(mmss(TOTAL), "session length", true);
 
@@ -1017,7 +1180,7 @@ function q(v){
 var CSV_HEAD = ["subject_id","dh_side","session_no","session_start_iso","session_start_epoch_ms",
   "trial_idx","order_pos","label","prop","planned_start_s","planned_end_s",
   "actual_start_iso","actual_start_epoch_ms","actual_end_iso","actual_end_epoch_ms",
-  "duration_s","status","detected_lag_ms","repeats"];
+  "duration_s","status","detected_lag_ms","repeats","gesture_set"];
 
 function csvRow(sess, t){
   var has = !!t.actualStart;
@@ -1028,14 +1191,14 @@ function csvRow(sess, t){
     has ? q(iso(t.actualStart)) : "", has ? Math.round(t.actualStart) : "",
     has ? q(iso(t.actualEnd)) : "", has ? Math.round(t.actualEnd) : "",
     has ? ((t.actualEnd - t.actualStart) / 1000).toFixed(3) : "",
-    t.status, t.drift || 0, t.repeats || 0
+    t.status, t.drift || 0, t.repeats || 0, q(sess.set || "")
   ].join(",");
 }
 
 function csvText(){
   var sess = {
     subject_id: S.subject, dh_side: S.dh, session_no: S.sessionNo,
-    start_iso: iso(S.startEpoch), start_epoch_ms: S.startEpoch
+    start_iso: iso(S.startEpoch), start_epoch_ms: S.startEpoch, set: CUR
   };
   return [CSV_HEAD.join(",")].concat(S.trials.map(function(t){
     return csvRow(sess, t);
@@ -1059,9 +1222,10 @@ function jsonText(){
   return JSON.stringify({
     app: "gesture-acquisition",
     version: 1,
-    protocol: { trials: N, trial_s: TRIAL/1000, rest_s: REST/1000, lead_in_s: LEAD/1000,
+    protocol: { set: CUR, trials: N, trial_s: TRIAL/1000, rest_s: REST/1000, lead_in_s: LEAD/1000,
       total_s: TOTAL/1000, schedule_end_s: scheduleEnd()/1000 },
     session: {
+      set: CUR,
       subject_id: S.subject, dh_side: S.dh, session_no: S.sessionNo,
       start_iso: iso(S.startEpoch), start_epoch_ms: S.startEpoch,
       end_iso: iso(S.startEpoch + TOTAL), end_epoch_ms: S.startEpoch + TOTAL,
@@ -1110,6 +1274,7 @@ function emailText(){
   return [
     "Gesture acquisition session",
     "",
+    "Set: " + setDef().label,
     "Subject: " + S.subject + "   Dominant hand: " + (S.dh === "R" ? "right" : "left") +
       "   Session: " + S.sessionNo,
     "Start: " + iso(S.startEpoch) + "  (epoch ms " + S.startEpoch + ")",
@@ -1331,6 +1496,16 @@ try {
     S.endpoint = localStorage.getItem("ga_endpoint") || "";
   }
 } catch(e){}
+el("f-set").addEventListener("change", function(){
+  CUR = this.value;
+  try { localStorage.setItem("ga_set", CUR); } catch(e){}
+  applySet();
+});
+try {
+  var savedSet = localStorage.getItem("ga_set");
+  if (savedSet && SETS[savedSet]){ CUR = savedSet; el("f-set").value = savedSet; }
+} catch(e){}
+
 el("f-subject").addEventListener("input", function(){ this.style.borderColor = ""; });
 if (embedded()){
   var tw = el("toast");
@@ -1339,7 +1514,7 @@ if (embedded()){
     "lands anywhere. Open <b>index.html</b> in Chrome to save the files.";
 }
 refreshArchive();
-refreshBudget();
+applySet();
 el("f-subject").focus();
 
 })();
