@@ -13,7 +13,11 @@ Two gesture sets ship with it, chosen from a dropdown on the setup screen:
 ## Open it
 
 **Live link — nothing to install:**
-<https://gesture-acquisition.apps.workbuddy.host/?sharecode=FJIBYQPJ6Q>
+<https://gesture-acquisition.apps.workbuddy.host/index.html?sharecode=FJIBYQPJ6Q>
+
+Keep the `/index.html` in the path. The bare `/?sharecode=…` form is served from a CDN edge
+cache that can still hold an older build for a while after an update, and a hard refresh does
+not clear it — if the link ever shows a stale version, adding the path fixes it.
 
 Open it in a laptop browser (Chrome or Safari). Phone layouts work, but the protocol needs a
 table, a glass, a keyboard and scissors, so a laptop is the only sensible place to run it.
