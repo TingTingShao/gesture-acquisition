@@ -118,7 +118,7 @@ without a researcher explaining it:
 | Triangle | stroke by stroke: the left slant, the right slant, then the base |
 | Circle | one stroke from the top, clockwise, returning to the start |
 | Square | three strokes, as the character 口 is written: down the left side, across the top and down the right in one stroke, then across the bottom |
-| Star | five strokes: the bar across first, the two slants down from the top, then the two that close it |
+| Star | five strokes, all the slants drawn downward: the bar across first, the two slants down from the top, then one stroke down from each end of the bar |
 
 The resting position has its own calm loop (hand flat on the table, slow breathing rings), and
 during the three-second get-ready cue the card switches to the next gesture, tinted amber.
