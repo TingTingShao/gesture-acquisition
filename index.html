@@ -339,6 +339,7 @@ tr:last-child td{border-bottom:0}
       <select id="f-set">
         <option value="daily">Daily activities — 8 gestures</option>
         <option value="shapes">Drawing shapes — 4 shapes</option>
+        <option value="workout">Workout &amp; resting — 4 activities</option>
       </select>
     </div>
 
@@ -381,7 +382,7 @@ tr:last-child td{border-bottom:0}
     </details>
 
     <button class="start" id="btn-start">Start session</button>
-    <p class="hint">Resting position: hands relaxed on the table, forearms supported, no movement.<br>
+    <p class="hint"><span id="rest-hint">Resting position: hands relaxed on the table, forearms supported, no movement.</span><br>
       <span class="kbd">Space</span> pause · <span class="kbd">→</span> skip · <span class="kbd">←</span> redo · <span class="kbd">F</span> fullscreen</p>
 
     <div class="archive" id="archive-bar" hidden>
@@ -673,17 +674,24 @@ tr:last-child td{border-bottom:0}
 "use strict";
 
 var TOTAL = 600000, READY = 3000;
+var FIRST_REST = 10000;
 var N = 13, TRIAL = 30000, REST = 15000, LEAD = 15000, CYCLE = 45000;
 
 function applyProtocol(n, perfS){
+  TOTAL = CUR === "workout" ? 562000 : 600000;
   N = n;
   TRIAL = Math.round(perfS * 1000);
   REST = Math.floor((TOTAL - N * TRIAL) / N);
   CYCLE = TRIAL + REST;
   LEAD = TOTAL - N * CYCLE + REST;
   READY = Math.min(3000, Math.round(REST * 0.5));
+  // Only round 1 has a shorter rest; all ten activities remain 12 s.
+  if (CUR === "workout"){ N = 10; TRIAL = 12000; REST = 48000; CYCLE = 60000; LEAD = 0; READY = 3000; }
 }
-function scheduleEnd(){ return LEAD + N * CYCLE - REST; }
+function scheduleEnd(){ return CUR === "workout" ? TOTAL : LEAD + N * CYCLE - REST; }
+function roundStart(i){ return i === 0 ? 0 : i * CYCLE - (REST - FIRST_REST); }
+function roundRest(i){ return i === 0 ? FIRST_REST : REST; }
+function roundAt(s){ return s < FIRST_REST + TRIAL ? 0 : 1 + Math.floor((s - FIRST_REST - TRIAL) / CYCLE); }
 
 var DAILY = [
   {id:"drink", name:"Drinking",          prop:"Glass of water",
@@ -715,6 +723,14 @@ var SHAPES = [
    instr:"Draw a five-pointed star in five strokes: the bar across first, then the two slants down from the top point, then one stroke down from each end of the bar. Keep drawing stars until the window ends."}
 ];
 
+var WORKOUT = [
+  {id:"walk", name:"Walking", prop:"Clear walking space", instr:"Walk at a normal, comfortable pace for the full 12 seconds, with a natural arm swing."},
+  {id:"march", name:"Fast marching in place", prop:"Clear floor space", instr:"Stay in one spot and quickly lift and lower alternating knees, with a natural arm swing, for the full 12 seconds."},
+  {id:"jacks", name:"Jumping jacks", prop:"Clear floor space", instr:"Repeat jumping jacks for 12 seconds: jump your feet apart as your arms rise, then bring them back together."},
+  {id:"squats", name:"Squats", prop:"Clear floor space", instr:"Repeat squats for 12 seconds: bend your knees and lower your hips, then return to standing."}
+];
+var REST_INSTRUCTION = "Rest however you like: sit, stand, walk casually, drink water, or move into position for the next workout. These are all resting; no particular movement is required.";
+
 var SETS = {
   daily: {
     id: "daily",
@@ -745,15 +761,41 @@ var SETS = {
       "Table: forearms supported, paper in front of the dominant hand"],
     trials: function(){ return 10; },
     perform: 30
+  },
+  workout: {
+    id: "workout", label: "Workout & resting", gestures: WORKOUT,
+    lede: "Ten rounds: the first starts with 10 s resting, the remaining nine with 48 s resting, each followed by 12 s activity. Total: 9 min 22 s. Walking, fast marching in place, squats and jumping jacks are randomised, each appears at least once, and consecutive rounds never repeat an activity. Rest however you like during resting time.",
+    props: ["Clear floor space for walking, fast marching in place, squats and jumping jacks", "A stable chair and water available for optional use during rest", "Rest freely between workouts; sitting, standing, casual walking, drinking water and transitions all belong to resting"],
+    trials: function(){ return 10; }, perform: 12
   }
 };
 
 var CUR = "daily";
 function setDef(){ return SETS[CUR]; }
 
-var G = DAILY.concat(SHAPES);
+var G = DAILY.concat(SHAPES, WORKOUT);
 var BY_ID = {};
 G.forEach(function(g){ BY_ID[g.id] = g; });
+
+// Match the existing inline illustrations without external assets or downloads.
+function addMovementScenes(){
+  el("art").insertAdjacentHTML("beforeend", '<div class="scene" data-g="free-rest"><svg viewBox="0 0 300 240" aria-hidden="true"><circle cx="150" cy="120" r="65" fill="#E8F5F0"/><circle cx="150" cy="120" r="44" fill="none" stroke="#91B5A7" stroke-width="3"/><path d="M126 101 V139 M174 101 V139" stroke="#47695C" stroke-width="9" stroke-linecap="round"/></svg></div>');
+  WORKOUT.forEach(function(g){
+    var walking = g.id === "walk";
+    var marching = g.id === "march";
+    var jacks = g.id === "jacks";
+    var squat = g.id === "squats";
+    var duration = "1.6s";
+    var legs = squat || marching ? "M150 138 L135 165 L125 195 M150 138 L165 165 L175 195" : "M150 138 L125 195 M150 138 L175 195";
+    var arms = "M150 93 L121 130 M150 93 L179 130";
+    var legMotion = walking ? '<animate attributeName="d" dur="' + duration + '" repeatCount="indefinite" values="M150 138 L125 195 M150 138 L175 195;M150 138 L175 195 M150 138 L125 195;M150 138 L125 195 M150 138 L175 195"/>' : jacks ? '<animate attributeName="d" dur="1.4s" repeatCount="indefinite" values="M150 138 L142 195 M150 138 L158 195;M150 138 L112 195 M150 138 L188 195;M150 138 L142 195 M150 138 L158 195"/>' : '';
+    var armMotion = jacks ? '<animate attributeName="d" dur="1.4s" repeatCount="indefinite" values="M150 93 L121 130 M150 93 L179 130;M150 93 L115 46 M150 93 L185 46;M150 93 L121 130 M150 93 L179 130"/>' : '';
+    if (squat) legMotion = '<animate attributeName="d" dur="2.4s" repeatCount="indefinite" values="M150 138 L135 165 L125 195 M150 138 L165 165 L175 195;M150 164 L118 165 L125 195 M150 164 L182 165 L175 195;M150 138 L135 165 L125 195 M150 138 L165 165 L175 195"/>';
+    if (marching) legMotion = '<animate attributeName="d" dur=".7s" repeatCount="indefinite" values="M150 138 L120 140 L120 165 M150 138 L165 165 L175 195;M150 138 L135 165 L125 195 M150 138 L180 140 L180 165;M150 138 L120 140 L120 165 M150 138 L165 165 L175 195"/>';
+    var motion = squat ? '<animateTransform attributeName="transform" type="translate" values="0 0;0 26;0 0" dur="2.4s" repeatCount="indefinite"/>' : '';
+    el("art").insertAdjacentHTML("beforeend", '<div class="scene" data-g="' + g.id + '"><svg viewBox="0 0 300 240" aria-hidden="true"><path d="M60 200 H240" stroke="#D8D1C4" stroke-width="3"/><g fill="none" stroke="#47695C" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><g>' + motion + '<circle cx="150" cy="64" r="17" fill="#E6B995" stroke="none"/><path d="M150 84 V138"/><path d="' + arms + '">' + armMotion + '</path></g><path d="' + legs + '">' + legMotion + '</path></g></svg></div>');
+  });
+}
 
 var el = function(id){ return document.getElementById(id); };
 
@@ -767,7 +809,7 @@ function embedded(){
 
 var S = {
   subject:"", dh:"R", sessionNo:1, endpoint:"", audio:true,
-  order:[], trials:[], events:[],
+  order:[], trials:[], rests:[], events:[],
   startEpoch:0, startPerf:0, pausedAccum:0, pausePerf:0, paused:false,
   running:false, finished:false, raf:0
 };
@@ -784,7 +826,21 @@ function shuffle(a){
 }
 
 function buildOrder(n){
+  if (CUR === "workout") return buildWorkoutOrder();
   return CUR === "shapes" ? buildShapeOrder(n) : buildDailyOrder(n);
+}
+
+function randomCoveredOrder(defs, n){
+  var ids = defs.map(function(g){ return g.id; });
+  var order = shuffle(ids.slice());
+  while (order.length < n){
+    var pool = ids.filter(function(id){ return id !== order[order.length - 1]; });
+    order.push(pool[Math.floor(Math.random() * pool.length)]);
+  }
+  return order;
+}
+function buildWorkoutOrder(){
+  return randomCoveredOrder(WORKOUT, 10);
 }
 
 function buildDailyOrder(n){
@@ -895,22 +951,22 @@ function flash(){
   setTimeout(function(){ f.classList.remove("on"); }, 90);
 }
 
-function openTrial(i, s, drift){
-  var tr = S.trials[i];
+function openTrial(i, s, drift, resting){
+  var tr = resting ? S.rests[i] : S.trials[i];
   if (!tr) return;
   var e = epochNow() - Math.max(0, drift);
   tr.actualStart = e;
   tr.drift = Math.round(drift);
   if (!tr.firstStart) tr.firstStart = e;
-  log("TRIAL_START", { trial: i + 1, label: tr.label, order_pos: i + 1 });
+  log(resting ? "REST_START" : "TRIAL_START", { trial: i + 1, label: tr.label, activity: tr.activity, category: tr.category, order_pos: i + 1 });
 }
-function closeTrial(i, status){
-  var tr = S.trials[i];
+function closeTrial(i, status, resting){
+  var tr = resting ? S.rests[i] : S.trials[i];
   if (!tr || tr.actualEnd) return;
   var e = epochNow();
   tr.actualEnd = e;
   if (tr.status === "pending") tr.status = status || "completed";
-  log("TRIAL_END", { trial: i + 1, label: tr.label, status: tr.status });
+  log(resting ? "REST_END" : "TRIAL_END", { trial: i + 1, label: tr.label, activity: tr.activity, category: tr.category, status: tr.status });
 }
 
 function readPerform(){ return Math.round(+el("f-perform").value || 0); }
@@ -933,6 +989,11 @@ function refreshBudget(){
     var n = d.trials();
     var rest = Math.floor((TOTAL / 1000 - n * d.perform) / n);
     b.className = "budget";
+    if (CUR === "workout"){
+      b.innerHTML = "First round: <b>10 s</b> resting + <b>12 s</b> activity. Remaining <b>9 rounds</b>: <b>48 s</b> resting + <b>12 s</b> activity. Total: <b>9:22</b>. Rest comes first; only workout activities are randomised.";
+      el("btn-start").disabled = false;
+      return { ok: true, p: 12 };
+    }
     b.innerHTML = "<b>" + n + "</b> trials, fixed · <b>" + d.perform + " s</b> drawing and <b>" +
       rest + " s</b> rest, so every session is exactly " + mmss(TOTAL) + ".";
     el("btn-start").disabled = false;
@@ -953,6 +1014,7 @@ function refreshBudget(){
 }
 
 function applySet(){
+  TOTAL = CUR === "workout" ? 562000 : 600000;
   var d = setDef();
   el("lede").textContent = d.lede;
   var ul = el("props-list");
@@ -963,6 +1025,9 @@ function applySet(){
     ul.appendChild(li);
   });
   el("perform-row").hidden = !!d.perform;
+  el("rest-hint").textContent = CUR === "workout"
+    ? "Resting is unrestricted: sit, stand, walk casually, drink water, or prepare for the next workout. No rest activity is assigned."
+    : "Resting position: hands relaxed on the table, forearms supported, no movement.";
   refreshBudget();
 }
 
@@ -986,11 +1051,18 @@ function startSession(){
   S.order = buildOrder(N);
   S.trials = S.order.map(function(id, i){
     return {
-      idx: i, id: id, label: BY_ID[id].name, prop: BY_ID[id].prop,
-      plannedStart: LEAD + i * CYCLE, plannedEnd: LEAD + i * CYCLE + TRIAL,
+      idx: i, id: id, label: BY_ID[id].category || BY_ID[id].name, prop: BY_ID[id].prop,
+      activity: BY_ID[id].name, category: BY_ID[id].category || (CUR === "workout" ? "Workout" : "Gesture"),
+      plannedStart: CUR === "workout" ? roundStart(i) + roundRest(i) : LEAD + i * CYCLE,
+      plannedEnd: (CUR === "workout" ? roundStart(i) + roundRest(i) : LEAD + i * CYCLE) + TRIAL,
       actualStart: 0, actualEnd: 0, status: "pending", drift: 0, firstStart: 0
     };
   });
+  S.rests = CUR === "workout" ? S.trials.map(function(t){
+    return { idx: t.idx, id: "resting", label: "Resting", activity: "Resting", category: "Resting", prop: "",
+      plannedStart: roundStart(t.idx), plannedEnd: t.plannedStart,
+      actualStart: 0, actualEnd: 0, status: "pending", drift: 0, firstStart: 0 };
+  }) : [];
   S.events = [];
   S.pausedAccum = 0; S.paused = false; S.finished = false; S.running = true;
 
@@ -1029,7 +1101,16 @@ function update(){
 
   var phase, idx, remain, winStart, winLen;
   var endOfSchedule = scheduleEnd();
-  if (s < LEAD){
+  if (CUR === "workout"){
+    idx = roundAt(s);
+    var start = S.rests[idx].plannedStart;
+    var activityStart = S.trials[idx].plannedStart;
+    if (s < activityStart){
+      phase = "rest"; remain = activityStart - s; winStart = start; winLen = activityStart - start;
+    } else {
+      phase = "perform"; remain = S.trials[idx].plannedEnd - s; winStart = activityStart; winLen = TRIAL;
+    }
+  } else if (s < LEAD){
     phase = "lead"; idx = -1; remain = LEAD - s; winStart = 0; winLen = LEAD;
   } else if (s >= endOfSchedule){
     phase = "tail"; idx = N - 1; remain = TOTAL - s;
@@ -1043,18 +1124,24 @@ function update(){
       phase = "rest"; idx = k; remain = CYCLE - off; winStart = LEAD + k * CYCLE + TRIAL; winLen = REST;
     }
   }
-  var sub = (phase === "rest" && remain <= READY) ? "ready" : phase;
+  var sub = (phase === "rest" && remain <= READY && (CUR === "workout" || idx + 1 < N)) ? "ready" : phase;
 
   if (phase !== prev.phase || idx !== prev.idx){
     if (prev.phase === "perform" && prev.idx >= 0) closeTrial(prev.idx, "completed");
+    if (prev.phase === "rest" && CUR === "workout") closeTrial(prev.idx, "completed", true);
     if (phase === "perform"){
-      var target = LEAD + idx * CYCLE;
+      var target = S.trials[idx].plannedStart;
       var drift = s - target;
       openTrial(idx, s, (drift >= 0 && drift < 1200) ? drift : 0);
       beep(880, 0.10, 0.16);
       flash();
     }
     if (phase === "rest" && prev.phase === "perform") beep(560, 0.09, 0.10);
+    if (phase === "rest" && CUR === "workout"){
+      var restDrift = s - S.rests[idx].plannedStart;
+      openTrial(idx, s, (restDrift >= 0 && restDrift < 1200) ? restDrift : 0, true);
+      flash();
+    }
     prev = {phase: phase, idx: idx};
   }
 
@@ -1062,11 +1149,12 @@ function update(){
 }
 
 function render(sub, idx, remain, s, winStart, winLen){
+  var visualPhase = sub;
   var stage = el("stage");
-  if (R.phase !== sub){
-    stage.dataset.phase = sub;
-    document.body.dataset.phase = sub;
-    R.phase = sub;
+  if (R.phase !== visualPhase){
+    stage.dataset.phase = visualPhase;
+    document.body.dataset.phase = visualPhase;
+    R.phase = visualPhase;
   }
 
   var label, title, subt, chip;
@@ -1077,18 +1165,29 @@ function render(sub, idx, remain, s, winStart, winLen){
   } else if (sub === "perform"){
     var g = BY_ID[S.order[idx]];
     label = "Perform"; title = g.name; subt = g.instr; chip = "Needs · " + g.prop;
+    if (CUR === "workout"){
+      label = "Workout";
+    }
   } else if (sub === "rest"){
     label = "Rest"; title = "Rest";
     subt = "Return to the resting position. Hands relaxed on the table, no movement.";
     chip = "";
+    if (CUR === "workout"){
+      label = "Resting"; title = "Rest however you like"; subt = REST_INSTRUCTION;
+      subt += " Next workout: " + BY_ID[S.order[idx]].name + ".";
+    }
   } else if (sub === "tail"){
     label = "Rest"; title = "All gestures done";
     subt = "Stay relaxed until the session ends. Nothing else to do.";
     chip = "";
   } else {
-    var gn = BY_ID[S.order[idx + 1]];
+    var gn = BY_ID[S.order[CUR === "workout" ? idx : idx + 1]];
     label = "Get ready"; title = gn ? gn.name : "Last one";
     subt = "Stay still. This gesture starts in a moment."; chip = "";
+    if (CUR === "workout"){
+      label = "Resting · get ready";
+      subt = REST_INSTRUCTION + " Next: " + gn.name + ". Wait for the workout cue to begin.";
+    }
   }
 
   if (R.label !== label){ el("ph-label").textContent = label; R.label = label; }
@@ -1097,6 +1196,8 @@ function render(sub, idx, remain, s, winStart, winLen){
   if (R.chip !== chip){ el("ph-chip").textContent = chip; R.chip = chip; }
 
   var gid = (sub === "rest" || sub === "lead" || sub === "tail") ? "rest" : S.order[sub === "ready" ? idx + 1 : idx];
+  if (CUR === "workout" && sub === "ready") gid = S.order[idx];
+  if (CUR === "workout" && sub === "rest") gid = "free-rest";
   if (!gid) gid = "rest";
   if (R.gid !== gid){
     var scenes = document.querySelectorAll("#art .scene");
@@ -1116,9 +1217,10 @@ function render(sub, idx, remain, s, winStart, winLen){
   if (R.fill2 !== p2){ el("ph-fill").style.width = p2 + "%"; R.fill2 = p2; }
 
   var trialTxt = idx >= 0 ? "Trial " + ((sub === "ready" ? idx + 2 : idx + 1)) + " / " + N : "Settle in";
+  if (CUR === "workout") trialTxt = "Round " + (idx + 1) + " / 10";
   if (R.trial !== trialTxt){ el("hud-trial").textContent = trialTxt; R.trial = trialTxt; }
 
-  var clock = mmss(s) + " / 10:00";
+  var clock = mmss(s) + " / " + mmss(TOTAL);
   if (R.clock !== clock){ el("hud-clock").textContent = clock; R.clock = clock; }
 
   var p1 = Math.round(Math.min(1, s / TOTAL) * 1000) / 10;
@@ -1144,14 +1246,21 @@ function skipTrial(){
   if (!S.running || S.paused) return;
   var s = sessionMs();
   if (s < LEAD) return;
-  var k = Math.floor((s - LEAD) / CYCLE);
+  var k = CUR === "workout" ? roundAt(s) : Math.floor((s - LEAD) / CYCLE);
   var tr = S.trials[k];
   if (tr){
-    tr.status = "skipped";
+    if (CUR !== "workout" || tr.status !== "completed") tr.status = "skipped";
     if (!tr.actualEnd) tr.actualEnd = epochNow();
     log("SKIP", { trial: k + 1, label: tr.label });
   }
-  jumpTo(LEAD + (k + 1) * CYCLE);
+  if (CUR === "workout" && S.rests[k]){
+    var rest = S.rests[k];
+    if (rest.status !== "completed"){
+      rest.status = "skipped";
+      if (rest.actualStart) closeTrial(k, "skipped", true);
+    }
+  }
+  jumpTo(CUR === "workout" ? roundStart(k + 1) : LEAD + (k + 1) * CYCLE);
   prev = {phase:null, idx:-2};
 }
 
@@ -1159,12 +1268,17 @@ function redoTrial(){
   if (!S.running || S.paused) return;
   var s = sessionMs();
   if (s < LEAD) return;
-  var k = Math.floor((s - LEAD) / CYCLE);
+  var k = CUR === "workout" ? roundAt(s) : Math.floor((s - LEAD) / CYCLE);
   var tr = S.trials[k];
   if (!tr) return;
   tr.status = "pending"; tr.actualEnd = 0; tr.actualStart = 0; tr.repeats = (tr.repeats || 0) + 1;
+  if (CUR === "workout" && S.rests[k]){
+    var rest = S.rests[k];
+    rest.status = "pending"; rest.actualStart = rest.actualEnd = 0;
+    rest.repeats = (rest.repeats || 0) + 1;
+  }
   log("REDO", { trial: k + 1, label: tr.label });
-  jumpTo(LEAD + k * CYCLE);
+  jumpTo(CUR === "workout" ? roundStart(k) : LEAD + k * CYCLE);
   prev = {phase:null, idx:-2};
 }
 
@@ -1176,15 +1290,17 @@ function finishSession(){
   var sNow = sessionMs();
   var offset = epochNow() - sNow;
 
-  for (var i = 0; i < S.trials.length; i++){
-    var tr = S.trials[i];
-    if (!tr.actualStart && tr.status === "pending"){
-      tr.status = "not_reached";
+  var windows = sessionRows(S.trials, S.rests);
+  for (var i = 0; i < windows.length; i++){
+    var tr = windows[i];
+    if (!tr.actualStart){
+      if (tr.status === "pending") tr.status = "not_reached";
       continue;
     }
     if (!tr.actualEnd){
-      tr.actualEnd = offset + tr.plannedEnd;
-      if (tr.status === "pending") tr.status = (sNow >= tr.plannedEnd - 600) ? "completed" : "aborted";
+      tr.actualEnd = offset + Math.min(sNow, tr.plannedEnd);
+      if (tr.status === "pending") tr.status = sNow >= tr.plannedEnd ? "completed" : "aborted";
+      log(tr.category === "Resting" ? "REST_END" : "TRIAL_END", { trial: tr.idx + 1, label: tr.label, activity: tr.activity, category: tr.category, status: tr.status });
     }
   }
   log("SESSION_END", { subject: S.subject, n_trials: N });
@@ -1207,7 +1323,7 @@ function showDone(){
   el("done").classList.add("on");
   document.body.classList.remove("locked");
   document.body.dataset.phase = "";
-  el("done-title").textContent = "Subject " + S.subject + " · " + N + " trials";
+  el("done-title").textContent = "Subject " + S.subject + " · " + N + (CUR === "workout" ? " rounds" : " trials");
 
   var counts = summary();
   var covered = Object.keys(counts).length;
@@ -1222,20 +1338,23 @@ function showDone(){
   }
   var doneN = S.trials.filter(function(t){ return t.status === "completed"; }).length;
   var want = setDef().gestures.length;
-  stat(covered + "/" + want, "gestures covered", covered === want);
+  stat(covered + "/" + want, CUR === "workout" ? "activities covered" : "gestures covered", covered === want);
   if (CUR === "shapes"){
     var least = 99;
     setDef().gestures.forEach(function(g){ least = Math.min(least, counts[g.name] || 0); });
     stat(least + "×", "least-drawn shape", least >= 2);
+  } else if (CUR === "workout"){
+    var restN = S.rests.filter(function(t){ return t.status === "completed"; }).length;
+    stat(restN + "/10", "rest periods completed", restN === 10);
   } else {
     stat(drinkN, "drinking trials", drinkN >= 2);
   }
-  stat(doneN + "/" + N, "trials completed", doneN === N);
+  stat(doneN + "/" + N, CUR === "workout" ? "workouts completed" : "trials completed", doneN === N);
   stat(mmss(TOTAL), "session length", true);
 
   var tb = el("done-tbl").querySelector("tbody");
   tb.innerHTML = "";
-  S.trials.forEach(function(t){
+  sessionRows(S.trials, S.rests).forEach(function(t){
     var tr = document.createElement("tr");
     tr.innerHTML = "<td>" + (t.idx + 1) + "</td>" +
       "<td class='lbl'>" + t.label + "</td>" +
@@ -1260,7 +1379,7 @@ function q(v){
 var CSV_HEAD = ["subject_id","dh_side","session_no","session_start_iso","session_start_epoch_ms",
   "trial_idx","order_pos","label","prop","planned_start_s","planned_end_s",
   "actual_start_iso","actual_start_epoch_ms","actual_end_iso","actual_end_epoch_ms",
-  "duration_s","status","detected_lag_ms","repeats","gesture_set"];
+  "duration_s","status","detected_lag_ms","repeats","gesture_set","activity","category"];
 
 function csvRow(sess, t){
   var has = !!t.actualStart;
@@ -1271,7 +1390,7 @@ function csvRow(sess, t){
     has ? q(iso(t.actualStart)) : "", has ? Math.round(t.actualStart) : "",
     has ? q(iso(t.actualEnd)) : "", has ? Math.round(t.actualEnd) : "",
     has ? ((t.actualEnd - t.actualStart) / 1000).toFixed(3) : "",
-    t.status, t.drift || 0, t.repeats || 0, q(sess.set || "")
+    t.status, t.drift || 0, t.repeats || 0, q(sess.set || ""), q(t.activity || t.label), q(t.category || "Gesture")
   ].join(",");
 }
 
@@ -1280,9 +1399,13 @@ function csvText(){
     subject_id: S.subject, dh_side: S.dh, session_no: S.sessionNo,
     start_iso: iso(S.startEpoch), start_epoch_ms: S.startEpoch, set: CUR
   };
-  return [CSV_HEAD.join(",")].concat(S.trials.map(function(t){
+  return [CSV_HEAD.join(",")].concat(sessionRows(S.trials, S.rests).map(function(t){
     return csvRow(sess, t);
   })).join("\n");
+}
+
+function sessionRows(trials, rests){
+  return trials.concat(rests || []).sort(function(a, b){ return a.plannedStart - b.plannedStart; });
 }
 
 function archiveCsv(){
@@ -1293,7 +1416,7 @@ function archiveCsv(){
     var p;
     try { p = JSON.parse(rec.payload); } catch(e){ return; }
     if (!p || !p.session || !p.trials) return;
-    p.trials.forEach(function(t){ lines.push(csvRow(p.session, t)); });
+    sessionRows(p.trials, p.rests).forEach(function(t){ lines.push(csvRow(p.session, t)); });
   });
   return lines.join("\n");
 }
@@ -1301,9 +1424,13 @@ function archiveCsv(){
 function jsonText(){
   return JSON.stringify({
     app: "gesture-acquisition",
-    version: 1,
+    version: 3,
     protocol: { set: CUR, trials: N, trial_s: TRIAL/1000, rest_s: REST/1000, lead_in_s: LEAD/1000,
-      total_s: TOTAL/1000, schedule_end_s: scheduleEnd()/1000 },
+      total_s: TOTAL/1000, schedule_end_s: scheduleEnd()/1000,
+      workout_windows: CUR === "workout" ? 10 : null,
+      resting_windows: CUR === "workout" ? 10 : null,
+      first_rest_s: CUR === "workout" ? FIRST_REST / 1000 : null,
+      resting_category: CUR === "workout" ? "Resting" : null },
     session: {
       set: CUR,
       subject_id: S.subject, dh_side: S.dh, session_no: S.sessionNo,
@@ -1313,6 +1440,7 @@ function jsonText(){
     },
     order: S.order,
     trials: S.trials,
+    rests: S.rests,
     events: S.events
   }, null, 2);
 }
@@ -1345,7 +1473,7 @@ function download(kind, auto){
 
 function emailText(){
   var rows = ["trial\tlabel\tstart_epoch_ms\tend_epoch_ms\tstart_iso"];
-  S.trials.forEach(function(t){
+  sessionRows(S.trials, S.rests).forEach(function(t){
     rows.push((t.idx + 1) + "\t" + t.label + "\t" +
       (t.actualStart ? Math.round(t.actualStart) : "-") + "\t" +
       (t.actualEnd ? Math.round(t.actualEnd) : "-") + "\t" +
@@ -1358,8 +1486,8 @@ function emailText(){
     "Subject: " + S.subject + "   Dominant hand: " + (S.dh === "R" ? "right" : "left") +
       "   Session: " + S.sessionNo,
     "Start: " + iso(S.startEpoch) + "  (epoch ms " + S.startEpoch + ")",
-    "Protocol: " + N + " trials x " + (TRIAL / 1000) + " s, " + (REST / 1000) + " s rest, " +
-      (TOTAL / 1000) + " s total",
+    CUR === "workout" ? "Protocol: (10 s resting + 12 s activity) + 9 x (48 s unrestricted resting + 12 s activity) = 562 s total"
+      : "Protocol: " + N + " trials x " + (TRIAL / 1000) + " s, " + (REST / 1000) + " s rest, " + (TOTAL / 1000) + " s total",
     "Order: " + S.order.join(" > "),
     "",
     rows.join("\n"),
@@ -1597,6 +1725,7 @@ if (embedded()){
     "lands anywhere. Open <b>index.html</b> in Chrome to save the files.";
 }
 refreshArchive();
+addMovementScenes();
 applySet();
 el("f-subject").focus();
 

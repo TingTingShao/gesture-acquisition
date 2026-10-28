@@ -1,14 +1,15 @@
 # Gesture acquisition · Science Day
 
-A single-file web app that runs a 10-minute gesture protocol and writes a timestamped label
+A single-file web app that runs a timed gesture protocol and writes a timestamped label
 log, so the sensor recording can be cut by label without any manual annotation.
 
-Two gesture sets ship with it, chosen from a dropdown on the setup screen:
+Three activity sets ship with it, chosen from a dropdown on the setup screen:
 
 | set | gestures | trials | per trial |
 |---|---|---|---|
 | **Daily activities** | drinking, eating, opening a bottle, pouring, typing, answering the phone, combing, cutting | 9–15, drawn at random | 30 s perform, rest derived |
 | **Drawing shapes** | triangle, circle, square, five-pointed star | 10, fixed | 30 s drawing, 30 s rest |
+| **Workout & resting** | walking, fast marching in place, squats, jumping jacks | 10 rounds | first rest 10 s, later rests 48 s; each activity 12 s |
 
 ## Open it
 
@@ -52,7 +53,31 @@ and the session clock jumps forward when it wakes up.
 
 ## Protocol implemented
 
-Both sets fill exactly 600 s and end on 10:00. They differ in how the schedule is derived.
+Daily activities and Drawing shapes last exactly 600 s (10:00). Workout & resting lasts
+562 s (9:22) because its first resting window is shortened to 10 s.
+
+### Workout & resting (Set 3)
+
+Each recording session has ten rounds. The first is **10 s resting followed by 12 s
+activity**; the remaining nine are **48 s resting followed by 12 s activity**, for a total
+of 562 s (9:22). Round 1 rests from 00:00 to 00:10, then performs its activity until
+00:22. Round 10 rests from 08:22 to 09:10, then performs its activity until 09:22.
+
+Only the four workout activities are randomized: walking, fast marching in place, squats
+and jumping jacks. Every activity appears at least once, and consecutive workout slots
+never repeat an activity. Fast marching in place means staying in one spot while quickly
+lifting and lowering alternating legs; it does not mean walking forward quickly.
+
+Resting is one unrestricted category. Subjects may sit, stand, walk casually, drink water,
+or transition to the next workout however they wish. These are examples of resting behavior,
+not separate gestures or assigned tasks. The final three seconds of rest preview the next
+workout without requiring subjects to stand still or begin early. Every resting period,
+including the tenth, precedes its round's activity. Prepare water, a chair and clear floor space.
+
+CSV records ten workout windows and ten resting windows in time order. Rest rows have
+`label`, `activity` and `category` all set to `Resting`; no rest subtypes are selected or
+inferred. JSON keeps ten `trials` and ten `rests`, with `REST_START` and `REST_END` events.
+Old stored sessions still export.
 
 ### Daily activities
 
@@ -99,7 +124,7 @@ enough for training: the window is class-pure, so any sliding window cut inside 
 the label. If a single execution took the full 30 s, roughly 85 % of every window would be
 idle and the recording would be useless.
 
-Between trials the screen asks for the resting position: hands relaxed on the table,
+For Daily activities and Drawing shapes, between trials the screen asks for the resting position: hands relaxed on the table,
 forearms supported, no movement. The last three seconds of each rest turn amber and name the
 next gesture, so the subject is ready but not moving early.
 
@@ -124,7 +149,7 @@ without a researcher explaining it:
 | Square | three strokes, as the character 口 is written: down the left side, across the top and down the right in one stroke, then across the bottom |
 | Star | five strokes, all the slants drawn downward: the bar across first, the two slants down from the top, then one stroke down from each end of the bar |
 
-The resting position has its own calm loop (hand flat on the table, slow breathing rings), and
+The table resting position has its own calm loop (hand flat on the table, slow breathing rings), and
 during the three-second get-ready cue the card switches to the next gesture, tinted amber.
 
 The animation is decorative and always secondary to the text: the instructions are complete
@@ -145,7 +170,8 @@ without it, so a subject who ignores the picture still knows what to do.
 | `duration_s` | wall-clock duration of the window |
 | `status` | `completed` / `skipped` / `aborted` / `not_reached` |
 | `detected_lag_ms` | how late the UI noticed the boundary, normally 7–12 ms |
-| `gesture_set` | `daily` or `shapes` — which set the session ran |
+| `gesture_set` | `daily`, `shapes` or `workout` — which set the session ran |
+| `activity`, `category` | activity and `Gesture`, `Workout` or the single category `Resting` |
 
 `gesture_<subject>_s<n>_<date>.json` — the same trials plus every state change
 (`SESSION_START`, `TRIAL_START`, `TRIAL_END`, `PAUSE`, `RESUME`, `SKIP`, `REDO`,
