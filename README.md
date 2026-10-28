@@ -7,7 +7,7 @@ Three activity sets ship with it, chosen from a dropdown on the setup screen:
 
 | set | gestures | trials | per trial |
 |---|---|---|---|
-| **Daily activities** | drinking, eating, opening a bottle, pouring, typing, answering the phone, combing, cutting | 9–15, drawn at random | 30 s perform, rest derived |
+| **Daily activities** | drinking, eating, typing, answering the phone, combing, cutting | 9–15, drawn at random | 30 s perform, rest derived |
 | **Drawing shapes** | triangle, circle, square, five-pointed star | 10, fixed | 30 s drawing, 30 s rest |
 | **Workout & resting** | walking, fast marching in place, squats, jumping jacks | 10 rounds | first rest 10 s, later rests 48 s; each activity 12 s |
 
@@ -87,7 +87,7 @@ Old stored sessions still export.
 | Trials | drawn at random from 9–15 at the start of every session |
 | Per trial | 30 s perform window (adjustable 10–35 s) |
 | Rest | follows from the draw, so the session fills exactly 600 s |
-| Order | random: all 8 gestures at least once, drinking exactly twice, no gesture twice in a row, no gesture more than 3 times |
+| Order | random: all 6 gestures at least once, drinking exactly twice, no gesture twice in a row, no gesture more than 3 times |
 
 The number of trials is not chosen by hand. Each session draws `n` from 9–15, then sets the
 rest so the schedule closes on the ten-minute mark:
@@ -138,8 +138,6 @@ without a researcher explaining it:
 |---|---|
 | Drinking | glass rises from the table, tilts into the mouth, comes back down |
 | Eating | almond is carried to the mouth and disappears |
-| Opening a bottle | cap twists twice, lifts, and is placed on the table |
-| Pouring water | bottle tilts, water stream falls, the glass fills |
 | Typing | index finger taps three keys, keys light up |
 | Answering the phone | phone rises to the ear, holds, returns |
 | Combing hair | comb strokes down through the hair twice |

@@ -200,25 +200,6 @@ details.props ul{margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.
   52%,100%{transform:translate(109px,-88px) scale(.3);opacity:0}}
 .almond{transform-box:view-box;transform-origin:108px 190px;animation:almondMove 6.4s ease-in-out infinite}
 
-@keyframes capMove{0%{transform:rotate(0deg);opacity:0}5%{transform:rotate(0deg);opacity:1}
-  13%{transform:rotate(-26deg)}19%{transform:rotate(24deg)}25%{transform:rotate(-20deg)}31%{transform:rotate(0deg)}
-  44%{transform:translate(2px,-22px) rotate(8deg)}
-  70%,94%{transform:translate(64px,86px) rotate(40deg);opacity:1}
-  100%{transform:translate(64px,86px) rotate(40deg);opacity:0}}
-.capMv{transform-box:view-box;transform-origin:113px 101px;animation:capMove 6.4s ease-in-out infinite}
-@keyframes handOpen{0%,31%{transform:translate(0,0)}44%{transform:translate(2px,-22px)}
-  70%{transform:translate(64px,86px)}88%,100%{transform:translate(0,0)}}
-.handOpenMv{animation:handOpen 6.4s ease-in-out infinite}
-
-@keyframes pourTilt{0%,12%{transform:translate(0,0) rotate(0deg)}
-  28%,66%{transform:translate(4px,-10px) rotate(54deg)}82%,100%{transform:translate(0,0) rotate(0deg)}}
-.pourMv{transform-box:view-box;transform-origin:78px 152px;animation:pourTilt 6.6s ease-in-out infinite}
-@keyframes streamOn{0%,26%{opacity:0}32%,62%{opacity:1}70%,100%{opacity:0}}
-@keyframes flow{to{stroke-dashoffset:-28}}
-.stream{stroke-dasharray:7 7;animation:streamOn 6.6s ease-in-out infinite,flow .8s linear infinite}
-@keyframes waterUp{0%,26%{transform:scaleY(.18)}62%,86%{transform:scaleY(.85)}100%{transform:scaleY(.18)}}
-.waterRise{transform-box:fill-box;transform-origin:50% 100%;animation:waterUp 6.6s ease-in-out infinite}
-
 @keyframes tapMove{0%,4%{transform:translateY(0)}8%,11%{transform:translateY(16px)}15%,22%{transform:translateY(0)}
   26%,29%{transform:translateY(16px)}33%,40%{transform:translateY(0)}
   44%,47%{transform:translateY(16px)}51%,100%{transform:translateY(0)}}
@@ -337,7 +318,7 @@ tr:last-child td{border-bottom:0}
     <div class="setrow">
       <label for="f-set">Gesture set</label>
       <select id="f-set">
-        <option value="daily">Daily activities — 8 gestures</option>
+        <option value="daily">Daily activities — 6 gestures</option>
         <option value="shapes">Drawing shapes — 4 shapes</option>
         <option value="workout">Workout &amp; resting — 4 activities</option>
       </select>
@@ -467,28 +448,6 @@ tr:last-child td{border-bottom:0}
           <use href="#hd" x="244" y="88"/>
           <g class="mvEat"><use href="#hf" x="78" y="182"/></g>
           <g class="almond"><ellipse cx="108" cy="190" rx="8" ry="5.5" fill="#C08A54"/></g>
-        </svg></div>
-
-        <div class="scene" data-g="open"><svg viewBox="0 0 300 240">
-          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
-          <rect x="90" y="138" width="46" height="60" rx="9" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
-          <rect x="105" y="114" width="16" height="26" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
-          <rect x="102" y="107" width="22" height="9" rx="3" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
-          <g class="handOpenMv"><use href="#hf" x="138" y="101"/></g>
-          <g class="capMv"><rect x="101" y="93" width="24" height="16" rx="4" fill="#D9724F"/></g>
-        </svg></div>
-
-        <div class="scene" data-g="pour"><svg viewBox="0 0 300 240">
-          <rect class="table" x="24" y="198" width="252" height="8" rx="4"/>
-          <path d="M172 152 h34 l-4 44 h-26 z" fill="#FFFFFF" stroke="#43423E" stroke-width="2" stroke-linejoin="round"/>
-          <g class="waterRise"><rect x="175" y="162" width="28" height="34" fill="#8FCBE0"/></g>
-          <path class="stream" d="M151 139 q26 9 33 26" fill="none" stroke="#8FCBE0" stroke-width="6" stroke-linecap="round"/>
-          <g class="pourMv">
-            <rect x="88" y="112" width="38" height="76" rx="9" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
-            <rect x="101" y="90" width="14" height="24" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
-            <rect x="99" y="84" width="18" height="7" rx="3" fill="#DCEFF6" stroke="#8FCBE0" stroke-width="2"/>
-            <use href="#hf" x="78" y="152"/>
-          </g>
         </svg></div>
 
         <div class="scene" data-g="type"><svg viewBox="0 0 300 240">
@@ -698,10 +657,6 @@ var DAILY = [
    instr:"Take the glass with your dominant hand, drink some water, then put the glass back on the table."},
   {id:"eat",   name:"Eating",            prop:"One almond",
    instr:"Pick up a single almond with your dominant hand, bring it to your mouth as if taking a pill, then lower your hand."},
-  {id:"open",  name:"Opening a bottle",  prop:"Bottle with cap",
-   instr:"Hold the bottle steady with your other hand, unscrew the cap with your dominant hand, and place the cap on the table."},
-  {id:"pour",  name:"Pouring water",     prop:"Bottle and glass",
-   instr:"Take the opened bottle with your dominant hand, pour some water into the glass, then put the bottle back on the table."},
   {id:"type",  name:"Typing",            prop:"Keyboard",
    instr:"Type at least ten characters on the keyboard using only the index finger of your dominant hand."},
   {id:"phone", name:"Answering the phone", prop:"Phone",
@@ -736,16 +691,15 @@ var SETS = {
     id: "daily",
     label: "Daily activities",
     gestures: DAILY,
-    lede: "A fixed ten-minute session. The order is randomised: all eight gestures appear at " +
+    lede: "A fixed ten-minute session. The order is randomised: all six gestures appear at " +
       "least once, drinking appears twice, and no gesture repeats back to back.",
-    props: ["Glass of water, plus a jug to refill it",
-      "Small bowl of almonds",
-      "Bottle with a screw cap (opened, for pouring)",
-      "Computer keyboard within reach",
-      "Phone (any handset)",
-      "Comb",
-      "Scissors and a few sheets of paper",
-      "Table and chair: the subject sits comfortably, forearms supported"],
+    props: ["Drinking: a glass of water",
+      "Eating: a small bowl of almonds",
+      "Typing: a computer keyboard within reach",
+      "Answering the phone: a phone (any handset)",
+      "Combing hair: a comb",
+      "Cutting: scissors and a few sheets of paper",
+      "Seated setup: a table and chair, with forearms comfortably supported"],
     trials: function(){ return 9 + Math.floor(Math.random() * 7); },
     perform: 0
   },

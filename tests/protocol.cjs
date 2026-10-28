@@ -192,8 +192,13 @@ for (const id of ['daily', 'shapes']) {
     assert.equal(app.scheduleEnd(), 600000);
     const order = app.buildOrder(n);
     assert.equal(order.length, n);
-    assert.equal(new Set(order).size, id === 'daily' ? 8 : 4);
-    if (id === 'daily') assert.equal(order.filter(x => x === 'drink').length, 2);
+    assert.equal(new Set(order).size, id === 'daily' ? 6 : 4);
+    if (id === 'daily') {
+      assert.equal(order.filter(x => x === 'drink').length, 2);
+      assert.ok(!order.includes('open') && !order.includes('pour'));
+      for (let i = 1; i < order.length; i++) assert.notEqual(order[i], order[i - 1]);
+      app.SETS.daily.gestures.forEach(g => assert.ok(order.filter(x => x === g.id).length <= 3));
+    }
     else app.SETS[id].gestures.forEach(g => assert.ok(order.filter(x => x === g.id).length >= 2));
   }
   assert.equal(get('perform-row').hidden, id === 'shapes');
