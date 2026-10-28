@@ -9,7 +9,7 @@ Three activity sets ship with it, chosen from a dropdown on the setup screen:
 |---|---|---|---|
 | **Daily activities** | drinking, eating, typing, answering the phone, combing, cutting | 9–15, drawn at random | 10 s rest, then 30 s perform |
 | **Drawing shapes** | triangle, circle, square, five-pointed star | 10, fixed | 30 s drawing, 30 s rest |
-| **Workout & resting** | walking, fast marching in place, squats, jumping jacks | 10 rounds | first rest 10 s, later rests 48 s; each activity 12 s |
+| **Workout & resting** | walking, fast marching in place, squats, jumping jacks | 10 rounds | first rest 10 s, later rests 20 s; each activity 20 s |
 
 ## Open it
 
@@ -54,14 +54,14 @@ and the session clock jumps forward when it wakes up.
 ## Protocol implemented
 
 Daily activities lasts 6–10 minutes at the default 30 s perform window, depending on the
-trial count. Drawing shapes lasts 600 s (10:00). Workout & resting lasts 562 s (9:22).
+trial count. Drawing shapes lasts 600 s (10:00). Workout & resting lasts 390 s (6:30).
 
 ### Workout & resting (Set 3)
 
-Each recording session has ten rounds. The first is **10 s resting followed by 12 s
-activity**; the remaining nine are **48 s resting followed by 12 s activity**, for a total
-of 562 s (9:22). Round 1 rests from 00:00 to 00:10, then performs its activity until
-00:22. Round 10 rests from 08:22 to 09:10, then performs its activity until 09:22.
+Each recording session has ten rounds. The first is **10 s resting followed by 20 s
+activity**; the remaining nine are **20 s resting followed by 20 s activity**, for a total
+of 390 s (6:30). Round 1 rests from 00:00 to 00:10, then performs its activity until
+00:30. Round 10 rests from 05:50 to 06:10, then performs its activity until 06:30.
 
 Only the four workout activities are randomized: walking, fast marching in place, squats
 and jumping jacks. Every activity appears at least once, and consecutive workout slots

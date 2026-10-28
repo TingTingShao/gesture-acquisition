@@ -638,7 +638,7 @@ var FIRST_REST = 10000;
 var N = 13, TRIAL = 30000, REST = 15000, LEAD = 15000, CYCLE = 45000;
 
 function applyProtocol(n, perfS){
-  TOTAL = CUR === "workout" ? 562000 : 600000;
+  TOTAL = CUR === "workout" ? 390000 : 600000;
   N = n;
   TRIAL = Math.round(perfS * 1000);
   REST = Math.floor((TOTAL - N * TRIAL) / N);
@@ -648,8 +648,8 @@ function applyProtocol(n, perfS){
   if (CUR === "daily"){
     REST = LEAD = 10000; CYCLE = TRIAL + REST; TOTAL = N * CYCLE; READY = 3000;
   }
-  // Only round 1 has a shorter rest; all ten activities remain 12 s.
-  if (CUR === "workout"){ N = 10; TRIAL = 12000; REST = 48000; CYCLE = 60000; LEAD = 0; READY = 3000; }
+  // Only round 1 has a shorter rest; all ten activities last 20 s.
+  if (CUR === "workout"){ N = 10; TRIAL = 20000; REST = 20000; CYCLE = 40000; LEAD = 0; READY = 3000; }
 }
 function scheduleEnd(){ return CUR === "workout" ? TOTAL : LEAD + N * CYCLE - REST; }
 function roundStart(i){ return i === 0 ? 0 : i * CYCLE - (REST - FIRST_REST); }
@@ -683,10 +683,10 @@ var SHAPES = [
 ];
 
 var WORKOUT = [
-  {id:"walk", name:"Walking", prop:"Clear walking space", instr:"Walk at a normal, comfortable pace for the full 12 seconds, with a natural arm swing."},
-  {id:"march", name:"Fast marching in place", prop:"Clear floor space", instr:"Stay in one spot and quickly lift and lower alternating knees, with a natural arm swing, for the full 12 seconds."},
-  {id:"jacks", name:"Jumping jacks", prop:"Clear floor space", instr:"Repeat jumping jacks for 12 seconds: jump your feet apart as your arms rise, then bring them back together."},
-  {id:"squats", name:"Squats", prop:"Clear floor space", instr:"Repeat squats for 12 seconds: bend your knees and lower your hips, then return to standing."}
+  {id:"walk", name:"Walking", prop:"Clear walking space", instr:"Walk at a normal, comfortable pace for the full 20 seconds, with a natural arm swing."},
+  {id:"march", name:"Fast marching in place", prop:"Clear floor space", instr:"Stay in one spot and quickly lift and lower alternating knees, with a natural arm swing, for the full 20 seconds."},
+  {id:"jacks", name:"Jumping jacks", prop:"Clear floor space", instr:"Repeat jumping jacks for 20 seconds: jump your feet apart as your arms rise, then bring them back together."},
+  {id:"squats", name:"Squats", prop:"Clear floor space", instr:"Repeat squats for 20 seconds: bend your knees and lower your hips, then return to standing."}
 ];
 var REST_INSTRUCTION = "Rest however you like: sit, stand, walk casually, drink water, or move into position for the next workout. These are all resting; no particular movement is required.";
 
@@ -722,9 +722,9 @@ var SETS = {
   },
   workout: {
     id: "workout", label: "Workout & resting", gestures: WORKOUT,
-    lede: "Ten rounds: the first starts with 10 s resting, the remaining nine with 48 s resting, each followed by 12 s activity. Total: 9 min 22 s. Walking, fast marching in place, squats and jumping jacks are randomised, each appears at least once, and consecutive rounds never repeat an activity. Rest however you like during resting time.",
+    lede: "Ten rounds: the first starts with 10 s resting, the remaining nine with 20 s resting, each followed by 20 s activity. Total: 6 min 30 s. Walking, fast marching in place, squats and jumping jacks are randomised, each appears at least once, and consecutive rounds never repeat an activity. Rest however you like during resting time.",
     props: ["Clear floor space for walking, fast marching in place, squats and jumping jacks", "A stable chair and water available for optional use during rest", "Rest freely between workouts; sitting, standing, casual walking, drinking water and transitions all belong to resting"],
-    trials: function(){ return 10; }, perform: 12
+    trials: function(){ return 10; }, perform: 20
   }
 };
 
@@ -946,9 +946,9 @@ function refreshBudget(){
     var rest = Math.floor((TOTAL / 1000 - n * d.perform) / n);
     b.className = "budget";
     if (CUR === "workout"){
-      b.innerHTML = "First round: <b>10 s</b> resting + <b>12 s</b> activity. Remaining <b>9 rounds</b>: <b>48 s</b> resting + <b>12 s</b> activity. Total: <b>9:22</b>. Rest comes first; only workout activities are randomised.";
+      b.innerHTML = "First round: <b>10 s</b> resting + <b>20 s</b> activity. Remaining <b>9 rounds</b>: <b>20 s</b> resting + <b>20 s</b> activity. Total: <b>6:30</b>. Rest comes first; only workout activities are randomised.";
       el("btn-start").disabled = false;
-      return { ok: true, p: 12 };
+      return { ok: true, p: 20 };
     }
     b.innerHTML = "<b>" + n + "</b> trials, fixed · <b>" + d.perform + " s</b> drawing and <b>" +
       rest + " s</b> rest, so every session is exactly " + mmss(TOTAL) + ".";
@@ -971,7 +971,7 @@ function refreshBudget(){
 }
 
 function applySet(){
-  TOTAL = CUR === "workout" ? 562000 : 600000;
+  TOTAL = CUR === "workout" ? 390000 : 600000;
   var d = setDef();
   el("lede").textContent = d.lede;
   var ul = el("props-list");
@@ -1443,7 +1443,7 @@ function emailText(){
     "Subject: " + S.subject + "   Dominant hand: " + (S.dh === "R" ? "right" : "left") +
       "   Session: " + S.sessionNo,
     "Start: " + iso(S.startEpoch) + "  (epoch ms " + S.startEpoch + ")",
-    CUR === "workout" ? "Protocol: (10 s resting + 12 s activity) + 9 x (48 s unrestricted resting + 12 s activity) = 562 s total"
+    CUR === "workout" ? "Protocol: (10 s resting + 20 s activity) + 9 x (20 s unrestricted resting + 20 s activity) = 390 s total"
       : "Protocol: " + N + " trials x " + (TRIAL / 1000) + " s, " + (REST / 1000) + " s rest, " + (TOTAL / 1000) + " s total",
     "Order: " + S.order.join(" > "),
     "",
