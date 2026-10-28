@@ -85,7 +85,8 @@ details.props ul{margin:0 0 14px;padding-left:18px;font-size:13px;line-height:1.
 
 .hud{display:flex;align-items:center;gap:20px;padding:16px clamp(18px,3.4vw,44px);
   font-size:12px;color:var(--ink3);letter-spacing:.02em}
-.hud .l{min-width:110px;font-weight:500;color:var(--ink2)}
+.hud .l{min-width:110px;font-size:clamp(20px,2.4vw,28px);line-height:1.2;
+  font-weight:600;color:var(--ink2);white-space:nowrap;font-variant-numeric:tabular-nums}
 .hud .track{flex:1;height:3px;background:rgba(27,27,25,.10);border-radius:2px;overflow:hidden}
 .hud .fill{height:100%;width:0;background:var(--ink3);border-radius:2px;transition:width .2s linear}
 .hud .r{min-width:110px;text-align:right;font-variant-numeric:tabular-nums}
@@ -644,6 +645,9 @@ function applyProtocol(n, perfS){
   CYCLE = TRIAL + REST;
   LEAD = TOTAL - N * CYCLE + REST;
   READY = Math.min(3000, Math.round(REST * 0.5));
+  if (CUR === "daily"){
+    REST = LEAD = 10000; CYCLE = TRIAL + REST; TOTAL = N * CYCLE; READY = 3000;
+  }
   // Only round 1 has a shorter rest; all ten activities remain 12 s.
   if (CUR === "workout"){ N = 10; TRIAL = 12000; REST = 48000; CYCLE = 60000; LEAD = 0; READY = 3000; }
 }
@@ -691,7 +695,7 @@ var SETS = {
     id: "daily",
     label: "Daily activities",
     gestures: DAILY,
-    lede: "A fixed ten-minute session. The order is randomised: all six gestures appear at " +
+    lede: "Rest for 10 s before each activity. The order is randomised: all six gestures appear at " +
       "least once, drinking appears twice, and no gesture repeats back to back.",
     props: ["Drinking: a glass of water",
       "Eating: a small bowl of almonds",
@@ -927,12 +931,10 @@ function readPerform(){ return Math.round(+el("f-perform").value || 0); }
 
 function protoCheck(){
   var p = readPerform();
-  var restAt15 = TOTAL / 1000 / 15 - p;
-  var restAt9 = TOTAL / 1000 / 9 - p;
   var err = "";
   if (p < 10) err = "The perform window needs at least 10 s.";
-  else if (restAt15 < 5) err = "With 9–15 trials the perform window can be at most 35 s.";
-  return { p: p, rMin: restAt15, rMax: restAt9, err: err, ok: !err };
+  else if (p > 35) err = "The perform window can be at most 35 s.";
+  return { p: p, err: err, ok: !err };
 }
 
 function refreshBudget(){
@@ -960,8 +962,9 @@ function refreshBudget(){
     b.textContent = c.err;
   } else {
     b.className = "budget";
-    b.innerHTML = "<b>9–15</b> trials drawn at random · rest follows at <b>" +
-      Math.round(c.rMin) + "–" + Math.round(c.rMax) + " s</b>, so every session is exactly " + mmss(TOTAL) + ".";
+    b.innerHTML = "<b>9–15</b> trials drawn at random · <b>10 s</b> rest before every activity, including the first · <b>" +
+      c.p + " s</b> per activity. Total: <b>" + mmss(9 * (c.p + 10) * 1000) + "–" +
+      mmss(15 * (c.p + 10) * 1000) + "</b>, depending on the trial count.";
   }
   el("btn-start").disabled = !c.ok;
   return c;

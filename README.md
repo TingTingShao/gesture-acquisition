@@ -7,7 +7,7 @@ Three activity sets ship with it, chosen from a dropdown on the setup screen:
 
 | set | gestures | trials | per trial |
 |---|---|---|---|
-| **Daily activities** | drinking, eating, typing, answering the phone, combing, cutting | 9–15, drawn at random | 30 s perform, rest derived |
+| **Daily activities** | drinking, eating, typing, answering the phone, combing, cutting | 9–15, drawn at random | 10 s rest, then 30 s perform |
 | **Drawing shapes** | triangle, circle, square, five-pointed star | 10, fixed | 30 s drawing, 30 s rest |
 | **Workout & resting** | walking, fast marching in place, squats, jumping jacks | 10 rounds | first rest 10 s, later rests 48 s; each activity 12 s |
 
@@ -53,8 +53,8 @@ and the session clock jumps forward when it wakes up.
 
 ## Protocol implemented
 
-Daily activities and Drawing shapes last exactly 600 s (10:00). Workout & resting lasts
-562 s (9:22) because its first resting window is shortened to 10 s.
+Daily activities lasts 6–10 minutes at the default 30 s perform window, depending on the
+trial count. Drawing shapes lasts 600 s (10:00). Workout & resting lasts 562 s (9:22).
 
 ### Workout & resting (Set 3)
 
@@ -83,21 +83,21 @@ Old stored sessions still export.
 
 | | |
 |---|---|
-| Total | 600 s fixed, always ends at 10:00 |
+| Total | 6–10 minutes at the default 30 s perform window, depending on the trial count |
 | Trials | drawn at random from 9–15 at the start of every session |
 | Per trial | 30 s perform window (adjustable 10–35 s) |
-| Rest | follows from the draw, so the session fills exactly 600 s |
+| Rest | fixed at 10 s before each activity, including the first |
 | Order | random: all 6 gestures at least once, drinking exactly twice, no gesture twice in a row, no gesture more than 3 times |
 
-The number of trials is not chosen by hand. Each session draws `n` from 9–15, then sets the
-rest so the schedule closes on the ten-minute mark:
+Each session draws `n` from 9–15. The resting window is always 10 s, so duration follows
+the trial count and chosen perform window:
 
 ```
-rest = (600 s − n × perform) / n
+total = n × (10 s rest + perform)
 ```
 
-which gives 10 s of rest at 15 trials, 16 s at 13, and 37 s at 9. Every session ends at 10:00
-with no idle tail, whatever the draw.
+At the default 30 s perform window, this gives 6:00 at 9 trials, 8:40 at 13, and 10:00
+at 15. There is no extra resting tail after the final activity.
 
 ### Drawing shapes
 

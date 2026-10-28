@@ -47,7 +47,7 @@ globalThis.test = { S, SETS, BY_ID, WORKOUT,
   set: id => { CUR = id; applySet(); }, buildOrder, applyProtocol, scheduleEnd,
   startSession, update, togglePause, sessionMs, skipTrial, redoTrial, finishSession,
   csvText, jsonText, archiveCsv, resetToSetup, emailText,
-  constants: () => ({ N, TRIAL, REST, LEAD, CYCLE, READY }) };
+  constants: () => ({ N, TRIAL, REST, LEAD, CYCLE, READY, TOTAL }) };
 })();`);
 vm.runInNewContext(source, sandbox, { filename: 'index.html' });
 const app = sandbox.test;
@@ -183,13 +183,15 @@ assert.equal(app.S.rests[0].status, 'completed');
 assert.equal(app.S.rests[0].actualEnd - app.S.rests[0].actualStart, 10000);
 app.finishSession();
 
-// The two existing sets keep their original scheduling and coverage rules.
+// Daily rest is fixed at 10 s for every draw; shapes keep their existing timing.
 for (const id of ['daily', 'shapes']) {
   app.resetToSetup(); app.set(id);
   for (let run = 0; run < 100; run++) {
-    const n = app.SETS[id].trials();
+    const n = id === 'daily' ? 9 + run % 7 : app.SETS[id].trials();
     app.applyProtocol(n, 30);
-    assert.equal(app.scheduleEnd(), 600000);
+    assert.equal(app.scheduleEnd(), id === 'daily' ? n * 40000 : 600000);
+    assert.equal(app.constants().TOTAL, app.scheduleEnd());
+    assert.equal(app.constants().REST, id === 'daily' ? 10000 : 30000);
     const order = app.buildOrder(n);
     assert.equal(order.length, n);
     assert.equal(new Set(order).size, id === 'daily' ? 6 : 4);
@@ -203,4 +205,22 @@ for (const id of ['daily', 'shapes']) {
   }
   assert.equal(get('perform-row').hidden, id === 'shapes');
 }
+app.set('daily');
+for (const perform of [10, 30, 35]) {
+  for (let n = 9; n <= 15; n++) {
+    app.applyProtocol(n, perform);
+    assert.equal(app.constants().REST, 10000);
+    assert.equal(app.constants().LEAD, 10000);
+    assert.equal(app.scheduleEnd(), n * (perform + 10) * 1000);
+  }
+}
+elapsed = 0; get('f-subject').value = 'S07'; app.startSession(); app.update();
+assert.equal(get('ph-count').textContent, 10);
+elapsed = 10000; app.update();
+assert.equal(get('ph-count').textContent, 30);
+assert.equal(get('ph-label').textContent, 'Perform');
+elapsed = 40000; app.update();
+assert.equal(get('ph-count').textContent, 10);
+assert.equal(get('ph-label').textContent, 'Rest');
+assert.equal(JSON.parse(app.jsonText()).protocol.rest_s, 10);
 console.log('PASS: first rest 10 s, remaining nine 48 s; all ten activities 12 s; total 9:22; random coverage/no repeats; exports; pause/skip/redo; existing sets.');
